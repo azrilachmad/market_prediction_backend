@@ -1,8 +1,9 @@
 import express from 'express';
-import { createBulkPredict, createSinglePredict } from '../controllers/vehicle.js';
+import { createBulkPredict, createSinglePredict, getVehicleList } from '../controllers/vehicle.js';
 
 const router = express.Router()
 
+router.get('/vehicles', getVehicleList)
 router.post('/vehicles', createSinglePredict)
 router.post('/bulk-predict', createBulkPredict)
 
