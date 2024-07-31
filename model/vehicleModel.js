@@ -6,7 +6,7 @@ const Cars = db.define('Cars', {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
-    }, 
+    },
     tanggal_jual: {
         type: DataTypes.DATE,
     },
@@ -66,10 +66,26 @@ const Cars = db.define('Cars', {
         type: DataTypes.INTEGER,
         underscored: true
     },
+    nama_mobil: {
+        type: DataTypes.STRING,
+        allowNull:true,
+    },
+    harga_atas: {
+        type: DataTypes.STRING,
+        allowNull:true,
+    },
+    harga_bawah: {
+        type: DataTypes.STRING,
+        allowNull:true,
+    },
+
+
 
 }, {
     tableName: 'cars',
-    timestamps: false,
+    timestamps: true,
+    updatedAt: 'updated_at',
+    createdAt: 'created_at',
     schema: 'cars',
     // freezeTableName: true
 });

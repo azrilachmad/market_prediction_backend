@@ -41,7 +41,6 @@ export const createSinglePredict = async (req, res) => {
         {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi, "link_sumber_analisa: [link1, link2, link3, link4]}. uat tanpa catatan, tidak boleh ada \n tidak boleh juga ada backslash tidak boleh ada tulisan json, hanya hasil sesuai format`
         const predictionResult = await geminiModel.generateContent(marketPredictionPrompt)
         const predictionResponse = await predictionResult.response
-        console.log(correctionResponse.text());
         const responseData = {
             "data": {
                 "nama_kendaraan": correctionResponse.text().replace('\n', ''),
@@ -52,52 +51,66 @@ export const createSinglePredict = async (req, res) => {
         }
         res.status(200).send(responseData)
     } catch (error) {
-        console.log("response error", error);
+        return res.status(400).send({
+            message: 'An error occured!'
+        });
     }
 
 }
 
 export const createBulkPredict = async (req, res) => {
+    const newData = []
     try {
-        const newData = []
         for (let i = 0; i < req.body.data.length; i++) {
-            const vehicleCorrectionPrompt = `Koreksi nama unit ini dengan nama yang benar dan singkat, anda bisa cari di internet. berikan response langsung nama nya tanpa perlu Nama unit yang benar adalah : ${req.body.data[i].nama_kendaraan}. tidak boleh ada \n.`;
+            const vehicleCorrectionPrompt = `Koreksi nama unit ini dengan nama yang benar dan singkat, anda bisa cari di internet. berikan response langsung nama nya tanpa perlu Nama unit yang benar adalah : ${req.body.data[i].desciption}. tidak boleh ada \n ataupun simbol apapun.`;
             const correctionResult = await geminiModel.generateContent(vehicleCorrectionPrompt);
             const vehicleCorrection = correctionResult.response;
+            const transmisi = req.body.data[i].transmisi === 'AT' ? 'Automatic' : req.body.data[i].transmisi === 'MT' ? 'Manual' : 'Tidak Diketahui'
 
-            const marketPredictionPrompt = `Berikan Average Market Price untuk mobil Bekas ${req.body.data[i].nama_kendaraan}, jarak tempuh kendaraan ${req.body.data[i].jarak_tempuh_kendaraan} km, transmisi kendaraan ${req.body.data[i].transmisi_kendaraan}, bahan bakar ${req.body.data[i].bahan_bakar}, wilayah kendaraan ${req.body.data[i].wilayah_kendaraan} dengan format json sebagai berikut:{"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi, "link_sumber_analisa: [link1, link2, link3, link4]}. uat tanpa catatan, tidak boleh ada \n tidak boleh juga ada backslash tidak boleh ada tulisan json, hanya hasil sesuai format`
+            const marketPredictionPrompt = `Berikan Average Market Price untuk mobil Bekas ${vehicleCorrection.text().replace('\n', '')}, jarak tempuh kendaraan ${req.body.data[i].km} km, transmisi kendaraan ${transmisi}, wilayah kendaraan ${req.body.data[i].lokasi}.generate dalam bentuk JSON dengan format sebagai berikut:{"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi, "link_sumber_analisa: [link1, link2, link3, link4]}. bbuat tanpa catatan, tidak boleh ada \n tidak boleh juga ada backslash tidak boleh ada tulisan json, hanya hasil sesuai format`
             const predictionResult = await geminiModel.generateContent(marketPredictionPrompt)
-            const predictionResponse = await predictionResult.response
+            const predictionResponse = predictionResult.response
             const marketPrediction = JSON.parse(predictionResponse.text())
+            // console.log(marketPrediction.harga_terendah)
+            // console.log(marketPrediction.harga_tertinggi)
             newData.push({
-                // ...req.body,
-                id: 1,
-                tanggal_jual: "1/4/2023",
-                wilayah_kendaraan: "PEKANBARU",
-                "nama_kendaraan": vehicleCorrection.text().replace('\n', ''),
-                tahun_kendaraan: '2015',
-                warna_kendaraan: 'PUTIH',
-                nomor_kendaraan: 'BXXXXTFR',
-                pajak_kendaraan: null,
-                stnk: null,
-                grade_all: 'D',
-                grade_interior: 'D',
-                grade_body: 'D',
-                grade_mesin: 'D',
-                jarak_tempuh_kendaraan: '150595',
-                "harga_tertinggi": marketPrediction.harga_tertinggi,
-                "harga_terendah": marketPrediction.harga_terendah,
-                status: 'SOLD',
-                harga_terbentuk: '64000000',
-                transmisi_kendaraan: "Manual",
-                bahan_bakar: "Bensin",
+                id: req.body.data[i].id ? req.body.data[i].id : null,
+                tanggal_jual: req.body.data[i].tanggal_jual ? req.body.data[i].tanggal_jual : null,
+                lokasi: req.body.data[i].lokasi ? req.body.data[i].lokasi : null,
+                desciption: vehicleCorrection.text().replace('\n', ''),
+                jenismobil: req.body.data[i].jenismobil ? req.body.data[i].jenismobil : null,
+                transmisi: req.body.data[i].transmisi ? req.body.data[i].transmisi : null,
+                year: req.body.data[i].year ? req.body.data[i].year : null,
+                umurmobil: req.body.data[i].umurmobil ? req.body.data[i].umurmobil : null,
+                color: req.body.data[i].color ? req.body.data[i].color : null,
+                nopol: req.body.data[i].nopol ? req.body.data[i].nopol : null,
+                pajak: req.body.data[i].pajak ? req.body.data[i].pajak : null,
+                stnk: req.body.data[i].stnk ? req.body.data[i].stnk : null,
+                grade_all: req.body.data[i].grade_all ? req.body.data[i].grade_all : null,
+                gradeinterior: req.body.data[i].gradeinterior,
+                gradebody: req.body.data[i].gradebody,
+                grademesin: req.body.data[i].grademesin,
+                km: req.body.data[i].km,
+                bottom_price: marketPrediction.harga_terendah !== null ? marketPrediction.harga_terendah : req.body.data[i].bottom_price,
+                status: req.body.data[i].status,
+                harga_terbentuk: req.body.data[i].harga_terbentuk,
+                nama_mobil: vehicleCorrection.text().replace('\n', ''),
+                harga_atas: marketPrediction.harga_tertinggi,
+                harga_bawah: marketPrediction.harga_terendah,
             })
         }
 
         const responseData = {
             data: newData,
             error: false,
-            status_code: 200,
+            message: "OK - The request was successfull",
+            meta: {
+                page: 1,
+                perPage: 100,
+                total: newData.length,
+                totalPages: Math.ceil(newData.length / 10),
+            },
+            status: 200,
         }
         res.status(200).send(responseData)
     } catch (error) {
@@ -108,22 +121,23 @@ export const createBulkPredict = async (req, res) => {
 
 
 export const getVehicleList = async (req, res) => {
-    const pageAsNumber = parseInt(req.query.page);
-    const limitAsNumber = parseInt(req.query.limit);
+    const pageAsNumber = parseInt(req.query.page) || 1;
+    const limitAsNumber = parseInt(req.query.limit) || 10;
     const order = req.query.order;
 
     let page = 0;
-    if(!Number.isNaN(pageAsNumber) && pageAsNumber > 0) {
+    if (!Number.isNaN(pageAsNumber) && pageAsNumber > 0) {
         page = pageAsNumber;
     }
 
     let limit = 10;
-    if(!Number.isNaN(limitAsNumber) && limitAsNumber > 0) {
+    if (!Number.isNaN(limitAsNumber) && limitAsNumber > 0) {
         page = limitAsNumber;
     }
 
+
     try {
-        const vehicles = await Cars.findAndCountAll({limit: limit, offset: pageAsNumber * limitAsNumber})
+        const vehicles = await Cars.findAndCountAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [['updated_at', 'DESC']] })
         res.json({
             data: vehicles.rows,
             error: false,
@@ -131,7 +145,7 @@ export const getVehicleList = async (req, res) => {
             meta: {
                 page: req.query.page,
                 perPage: limit.toString(),
-                total: vehicles.count, 
+                total: vehicles.count,
                 totalPages: Math.ceil(vehicles.count / limit)
             }
             // totalRows: totalRows,
@@ -139,7 +153,25 @@ export const getVehicleList = async (req, res) => {
         });
     } catch (error) {
         console.log(error)
-        res.status(500).json({error: "Internal Server Error"})
+        res.status(500).json({ error: "Internal Server Error" })
     }
+}
 
+export const updateVehicleData = async (req, res) => {
+    const { vehicles } = req.body;
+    try {
+
+        const promise = vehicles.map((vehicle) => {
+            const { id, desciption, harga_bawah, harga_atas} = vehicle;
+            return Vehicle.update({ desciption, harga_bawah, harga_atas, updated_at: Date.now() }, { where: { id } });
+        })
+        await Promise.all(promise)
+        res.json({
+            error: false,
+            message: "OK - The request was successfull",
+            status: 200,
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
 }
