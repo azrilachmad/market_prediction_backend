@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import dotenv from "dotenv";
 import Vehicle from "../model/vehicleModel.js";
 import { Op } from "sequelize";
 import Cars from "../model/vehicleModel.js";
+import dotenv from "dotenv";
 dotenv.config();
 
 const gemini_api_key = process.env.GEMINI_API_KEY;

@@ -3,32 +3,19 @@ import bodyParser from 'body-parser'
 import cors from 'cors';
 import vehiclesRoutes from './routes/vehicles.js'
 import db from './config/db.js'
-import * as http from 'http';
-import dotenv from "dotenv";
-dotenv.config();
 
 const app = express();
+const PORT = 3001;
 
-app.use(cors({ origin: '*' }));
+
+app.use(cors({origin: ['*', 'http://marketprediction.103.90.249.152.nip.io', 'marketprediction.103.90.249.152.nip.io']}));
 app.use(express.json());
 db.authenticate()
     .then(() => console.log('Database Connected...'))
     .catch(err => console.error("Error connecting to the database: ", err))
 
+
 app.use(vehiclesRoutes);
 
-const hostname = process.env.HOSTNAME;
 
-const port = 3001;
-
-
-const server = http.createServer((req, res) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Hello World!\n');
-});
-
-server.listen(port, hostname, () => {           
-    console.log(`Server running at http://${hostname}:${port}/`);
-});
-
+app.listen(PORT, () => console.log(`listening on port: http://localhost:${PORT}`));

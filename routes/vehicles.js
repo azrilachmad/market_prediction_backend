@@ -2,11 +2,10 @@ import express from 'express';
 import { createBulkPredict, createSinglePredict, getVehicleList, updateVehicleData } from '../controllers/vehicle.js';
 
 const router = express.Router()
-
-router.get('/vehicles', getVehicleList)
-router.post('/vehicles', createSinglePredict)
-router.put('/vehicles', updateVehicleData)
-router.post('/bulk-predict', createBulkPredict)
+router.get('/api/vehicles/', getVehicleList)
+router.post('/api/vehicles', createSinglePredict)
+router.put('/api/vehicles', updateVehicleData)
+router.post('/api/bulk-predict', createBulkPredict)
 
 
 export default router;

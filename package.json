@@ -2,6 +2,7 @@
   "name": "market_prediction_backend",
   "version": "1.0.0",
   "description": "",
+  "homepage": ".",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -16,6 +17,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "market_prediction_backend": "file:",
     "pg": "^8.12.0",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.3"
