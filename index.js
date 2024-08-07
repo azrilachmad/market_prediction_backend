@@ -8,7 +8,7 @@ const app = express();
 const PORT = 3001;
 
 
-app.use(cors({origin: '*'}));
+app.use(cors({ origin: ['*', 'http://marketprediction.103.90.249.152.nip.io', 'marketprediction.103.90.249.152.nip.io'] }));
 app.use(express.json());
 db.authenticate()
     .then(() => console.log('Database Connected...'))
