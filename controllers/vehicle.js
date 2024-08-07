@@ -1,8 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import Vehicle from "../model/vehicleModel.js";
-import { Op } from "sequelize";
+import { DataTypes, Op, Sequelize } from "sequelize";
 import Cars from "../model/vehicleModel.js";
 import dotenv from "dotenv";
+import CarsType from "../model/vehicleType.js";
+import sequelize from "../config/db.js";
+import { convDate } from "../helper/index.js";
 dotenv.config();
 
 const gemini_api_key = process.env.GEMINI_API_KEY;
@@ -162,7 +165,7 @@ export const updateVehicleData = async (req, res) => {
     try {
 
         const promise = vehicles.map((vehicle) => {
-            const { id, desciption, harga_bawah, harga_atas} = vehicle;
+            const { id, desciption, harga_bawah, harga_atas } = vehicle;
             return Vehicle.update({ desciption, harga_bawah, harga_atas, updated_at: Date.now() }, { where: { id } });
         })
         await Promise.all(promise)
@@ -173,5 +176,170 @@ export const updateVehicleData = async (req, res) => {
         });
     } catch (error) {
         res.status(400).json({ error: error.message })
+    }
+}
+
+export const getVehicleType = async (req, res) => {
+
+    try {
+        const vehicles = await CarsType.findAndCountAll({
+            attributes: ['jenismobil', [Sequelize.fn('COUNT', Sequelize.col('jenismobil')), 'value']],
+            group: ['jenismobil'],
+            order: [[Sequelize.col('value'), 'DESC']], // Order by jumlah_mobil DESC
+            limit: 10
+        })
+        res.json({
+            data: vehicles.rows,
+            error: false,
+            message: "OK - The request was successfull",
+            meta: {
+                total: vehicles.count,
+            }
+        });
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: "Internal Server Error" })
+    }
+}
+
+export const getCarCount = async (req, res) => {
+
+    try {
+        const vehicles = await CarsType.count({})
+        res.json({
+            data: vehicles,
+            error: false,
+            message: "OK - The request was successfull",
+        });
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: "Internal Server Error" })
+    }
+}
+
+export const getCarTypeCount = async (req, res) => {
+
+    try {
+        const vehicles = await Cars.count({
+            distinct: true,
+            col: 'jenismobil'
+        })
+        res.json({
+            data: vehicles,
+            error: false,
+            message: "OK - The request was successfull",
+        });
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: "Internal Server Error" })
+    }
+}
+
+export const getOmsetPenjualan = async (req, res) => {
+
+    try {
+        const vehicles = await Cars.sum('harga_terbentuk')
+        res.json({
+            data: vehicles,
+            error: false,
+            message: "OK - The request was successfull",
+        });
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: "Internal Server Error" })
+    }
+}
+
+export const getVehicleRank = async (req, res) => {
+
+    try {
+        const vehicles = `WITH RankedSales AS (SELECT
+                jenismobil,
+                TO_CHAR(DATE_TRUNC('month', tanggal_jual), 'Month') AS bulan,
+                DATE_TRUNC('month', tanggal_jual) AS tanggal,
+                SUM(harga_terbentuk) AS sum_harga_terbentuk,
+                ROW_NUMBER() OVER (PARTITION BY TO_CHAR(DATE_TRUNC('month', tanggal_jual), 'Month') ORDER BY SUM(harga_terbentuk) DESC) AS peringkat
+            FROM cars.cars
+            GROUP BY jenismobil, DATE_TRUNC('month', tanggal_jual)
+        )
+        SELECT *
+        FROM RankedSales
+        WHERE peringkat <= 5
+        ORDER BY TO_DATE(bulan, 'Month YYYY')`
+
+        const result = await sequelize.query(vehicles)
+        res.json({
+            data: result[0].map((data) => {
+                return {
+                    mobil: data.jenismobil,
+                    bulan: convDate(data.tanggal, 'MMMM'),
+                    tanggal: convDate(data.tanggal, 'DD-MM-YYYY'),
+                    harga: data.sum_harga_terbentuk * 1,
+                    peringkat: data.peringkat * 1
+                }
+            }),
+            error: false,
+            message: "OK - The request was successfull",
+        });
+
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: "Internal Server Error" })
+    }
+}
+
+
+export const getVehicleTypeList = async (req, res) => {
+    try {
+        const vehicles = `select distinct jenismobil from cars.cars`
+
+        const result = await sequelize.query(vehicles)
+        res.json({
+            data: result[0].map((ctx) => {
+                return {
+                    id: ctx.jenismobil,
+                    name: ctx.jenismobil
+                }
+            }),
+            error: false,
+            message: "OK - The request was successfull",
+        });
+
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: "Internal Server Error" })
+    }
+}
+
+export const getPriceComparison = async (req, res) => {
+    const jenisMobil = req.query.jenisMobil
+
+    try {
+        const vehicles = `SELECT * FROM (
+    SELECT jenisMobil, 
+           TO_CHAR(DATE_TRUNC('month', tanggal_jual), 'Month') AS bulan, 
+           DATE_TRUNC('month', tanggal_jual) AS tanggal,
+           ROUND(AVG(harga_atas)) AS avg_top_price, 
+           ROUND(AVG(harga_bawah)) AS avg_bottom_price, 
+           ROUND(AVG(harga_terbentuk)) AS avg_actual_sold_price
+    FROM cars.cars where jenismobil like '${jenisMobil}%'
+    GROUP BY jenisMobil, DATE_TRUNC('month', tanggal_jual)
+) AS subquery
+ORDER BY jenisMobil, tanggal;`
+
+        const result = await sequelize.query(vehicles)
+        res.json({
+            data: result[0],
+            error: false,
+            message: "OK - The request was successfull",
+            status: 200,
+        });
+
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: "Internal Server Error" })
     }
 }
