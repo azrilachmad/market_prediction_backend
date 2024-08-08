@@ -166,7 +166,7 @@ export const updateVehicleData = async (req, res) => {
 
         const promise = vehicles.map((vehicle) => {
             const { id, desciption, harga_bawah, harga_atas } = vehicle;
-            return Vehicle.update({ desciption, harga_bawah, harga_atas, updated_at: Date.now() }, { where: { id } });
+            Vehicle.update({ desciption, harga_bawah, harga_atas, updated_at: Date.now() }, { where: { id } });
         })
         await Promise.all(promise)
         res.json({
