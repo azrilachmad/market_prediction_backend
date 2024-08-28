@@ -140,7 +140,7 @@ export const getVehicleList = async (req, res) => {
 
 
     try {
-        const vehicles = await Cars.findAndCountAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [['updated_at', 'DESC']] })
+        const vehicles = await Cars.findAndCountAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [['updated_at', 'ASC']] })
         res.json({
             data: vehicles.rows,
             error: false,
@@ -166,7 +166,7 @@ export const updateVehicleData = async (req, res) => {
 
         const promise = vehicles.map((vehicle) => {
             const { id, desciption, harga_bawah, harga_atas } = vehicle;
-            Vehicle.update({ desciption, harga_bawah, harga_atas, updated_at: Date.now() }, { where: { id } });
+            Vehicle.update({ desciption, harga_bawah, harga_atas, nama_mobil: desciption, updated_at: Date.now() }, { where: { id } });
         })
         await Promise.all(promise)
         res.json({
