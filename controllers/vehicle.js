@@ -40,8 +40,8 @@ export const createSinglePredict = async (req, res) => {
         const correctionResponse = correctionResult.response;
 
 
-        const marketPredictionPrompt = `Berikan Average Market Price untuk ${jenis_kendaraan} Bekas ${nama_kendaraan}, Tahun kendaraan ${tahun_kendaraan} jarak tempuh kendaraan ${jarak_tempuh_kendaraan} km, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar}, wilayah kendaraan ${wilayah_kendaraan} dan tanggal iklan paling terbaru dengan format json sebagai berikut:
-        {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi, "link_sumber_analisa: [link1 (olx), link2 (carsome), link3 (mobil123), link4 (carmudi))], "tanggal_posting": Tanggal iklan Terbaru sesuai kendaraan tersebut,}. buat tanpa catatan, tidak boleh ada \n tidak boleh juga ada backslash tidak boleh ada tulisan json, hanya hasil sesuai format`
+        const marketPredictionPrompt = `Berikan Average Market Price untuk ${jenis_kendaraan} Bekas ${nama_kendaraan}, Tahun kendaraan ${tahun_kendaraan} jarak tempuh kendaraan ${jarak_tempuh_kendaraan} km, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar}, wilayah kendaraan ${wilayah_kendaraan} dan tanggal iklan dibuat paling terbaru dengan format json sebagai berikut:
+        {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi, "link_sumber_analisa: [link1 (olx), link2 (carsome), link3 (mobil123), link4 (carmudi))], "tanggal_posting": Tanggal dibuat iklan terbaru}. buat tanpa catatan, tidak boleh ada \n tidak boleh juga ada backslash tidak boleh ada tulisan json, hanya hasil sesuai format`
         const predictionResult = await geminiModel.generateContent(marketPredictionPrompt)
         const predictionResponse = await predictionResult.response
         const responseData = {
