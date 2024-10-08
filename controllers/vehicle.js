@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import CarsType from "../model/vehicleType.js";
 import sequelize from "../config/db.js";
 import { convDate } from "../helper/index.js";
+import fs from 'fs';
+import { ChartJSNodeCanvas } from "chartjs-node-canvas";
 dotenv.config();
 
 const gemini_api_key = process.env.GEMINI_API_KEY;
@@ -41,7 +43,7 @@ export const createSinglePredict = async (req, res) => {
 
 
         const marketPredictionPrompt = `Berikan Average Market Price untuk ${jenis_kendaraan} Bekas ${nama_kendaraan}, Tahun kendaraan ${tahun_kendaraan} jarak tempuh kendaraan ${jarak_tempuh_kendaraan} km, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar}, wilayah kendaraan ${wilayah_kendaraan} dan tanggal iklan dibuat paling terbaru dengan format json sebagai berikut:
-        {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi, "link_sumber_analisa: [link1 (olx), link2 (carsome), link3 (mobil123), link4 (carmudi))], "tanggal_posting": Tanggal dibuat iklan terbaru}. buat tanpa catatan, tidak boleh ada \n tidak boleh juga ada backslash tidak boleh ada tulisan json, hanya hasil sesuai format`
+        {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi, "link_sumber_analisa: [link1 (https://www.facebook.com/marketplace/bandung/search/?query=xxxxxx), link2 (https://www.facebook.com/marketplace/bandung/search/?query=xxxxx), link3 (https://www.facebook.com/marketplace/bandung/search/?query=xxxxx), link4 (https://www.facebook.com/marketplace/bandung/search/?query=xxxxx))], "tanggal_posting": Tanggal dibuat iklan terbaru}. buat tanpa catatan, tidak boleh ada \n tidak boleh juga ada backslash tidak boleh ada tulisan json, hanya hasil sesuai format`
         const predictionResult = await geminiModel.generateContent(marketPredictionPrompt)
         const predictionResponse = await predictionResult.response
         const responseData = {
@@ -150,6 +152,71 @@ export const getVehicleList = async (req, res) => {
                 perPage: limit.toString(),
                 total: vehicles.count,
                 totalPages: Math.ceil(vehicles.count / limit)
+            }
+            // totalRows: totalRows,
+            // totalPage: totalPage
+        });
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: "Internal Server Error" })
+    }
+}
+
+export const getChart = async (req, res) => {
+    const width = 400; //px
+    const height = 400; //px
+    const backgroundColour = 'white'; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
+    const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour });
+
+    const configuration = {
+        type: 'line',   // for line chart
+        data: {
+            labels: [2018, 2019, 2020, 2021],
+            datasets: [{
+                label: "Sample 1",
+                data: [10, 15, -20, 15],
+                fill: false,
+                borderColor: ['rgb(51, 204, 204)'],
+                borderWidth: 1,
+                xAxisID: 'xAxis1' //define top or bottom axis ,modifies on scale
+            },
+            {
+                label: "Sample 2",
+                data: [10, 30, 20, 10],
+                fill: false,
+                borderColor: ['rgb(255, 102, 255)'],
+                borderWidth: 1,
+                xAxisID: 'xAxis1'
+            },
+            ],
+        },
+        options: {
+            scales: {
+                y: {
+                    suggestedMin: 0,
+                }
+            }
+        }
+    }
+    const dataUrl = await chartJSNodeCanvas.renderToDataURL(configuration);
+    const base64Image = dataUrl
+    var base64Data = base64Image.replace(/^data:image\/png;base64,/, "");
+    fs.writeFile("out.png", base64Data, 'base64', function (err) {
+        if (err) {
+            console.log(err);
+        }
+    });
+
+    try {
+        res.json({
+            data: dataUrl,
+            error: false,
+            message: "OK - The request was successfull",
+            meta: {
+                page: 1,
+                perPage: 1,
+                total: 1,
+                totalPages: 1
             }
             // totalRows: totalRows,
             // totalPage: totalPage

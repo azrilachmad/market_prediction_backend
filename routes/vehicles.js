@@ -1,7 +1,8 @@
 import express from 'express';
-import { createBulkPredict, createSinglePredict, getCarCount, getCarTypeCount, getOmsetPenjualan, getPriceComparison, getVehicleList, getVehicleRank, getVehicleType, getVehicleTypeList, updateVehicleData } from '../controllers/vehicle.js';
+import { createBulkPredict, createSinglePredict, getCarCount, getCarTypeCount, getChart, getOmsetPenjualan, getPriceComparison, getVehicleList, getVehicleRank, getVehicleType, getVehicleTypeList, updateVehicleData } from '../controllers/vehicle.js';
 
 const router = express.Router()
+router.get('/api/chart/', getChart)
 router.get('/api/vehicles/', getVehicleList)
 router.get('/api/vehicles/count', getCarCount)
 router.get('/api/vehicles/count-type', getCarTypeCount)
