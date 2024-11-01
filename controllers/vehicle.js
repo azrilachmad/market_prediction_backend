@@ -168,13 +168,15 @@ export const getChart = async (req, res) => {
     const backgroundColour = 'white'; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
     const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour });
 
+    const {chartType} = req.query
+
     const configuration = {
-        type: 'line',   // for line chart
+        type: chartType,   // for line chart
         data: {
             labels: [2018, 2019, 2020, 2021],
             datasets: [{
                 label: "Sample 1",
-                data: [10, 15, -20, 15],
+                data: [10, 15, 20, 15],
                 fill: false,
                 borderColor: ['rgb(51, 204, 204)'],
                 borderWidth: 1,
@@ -210,14 +212,7 @@ export const getChart = async (req, res) => {
     try {
         res.json({
             data: dataUrl,
-            error: false,
             message: "OK - The request was successfull",
-            meta: {
-                page: 1,
-                perPage: 1,
-                total: 1,
-                totalPages: 1
-            }
             // totalRows: totalRows,
             // totalPage: totalPage
         });
