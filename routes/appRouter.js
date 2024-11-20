@@ -1,9 +1,10 @@
 const express = require('express');
-const { createBulkPredict, createSinglePredict, getCarCount, getCarTypeCount, getChart, getOmsetPenjualan, getPriceComparison, getVehicleList, getVehicleRank, getVehicleType, getVehicleTypeList, updateVehicleData } = require('../controllers/vehicle.js');
-const signIn = require('./../controllers/auth.js');
+const { createBulkPredict, createSinglePredict, getCarCount, getCarTypeCount, getChart, getOmsetPenjualan, getPriceComparison, getVehicleList, getVehicleRank, getVehicleType, getVehicleTypeList, updateVehicleData } = require('../controllers/vehicleController.js');
+const {signIn, signUp} = require('./../controllers/authController.js');
 
 const router = express.Router()
 
+router.post('/api/register/', signUp)
 router.get('/api/login/', signIn)
 
 router.get('/api/chart/', getChart)
