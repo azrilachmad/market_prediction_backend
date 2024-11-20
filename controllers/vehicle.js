@@ -1,14 +1,14 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import Vehicle from "../model/vehicleModel.js";
-import { DataTypes, Op, Sequelize } from "sequelize";
-import Cars from "../model/vehicleModel.js";
-import dotenv from "dotenv";
-import CarsType from "../model/vehicleType.js";
-import sequelize from "../config/db.js";
-import { convDate } from "../helper/index.js";
-import fs from 'fs';
-import { ChartJSNodeCanvas } from "chartjs-node-canvas";
-dotenv.config();
+require('dotenv').config()
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const Vehicle = require("../model/vehicleModel.js");
+const { DataTypes, Op, Sequelize } = require("sequelize");
+const Cars = require("../model/vehicleModel.js");
+const CarsType = require("../model/vehicleType.js");
+const sequelize = require("../config/db.js");
+const { convDate } = require("../helper/index.js");
+
+const fs = ('fs');
+const { ChartJSNodeCanvas } = ("chartjs-node-canvas");
 
 const gemini_api_key = process.env.GEMINI_API_KEY;
 const googleAI = new GoogleGenerativeAI(gemini_api_key);
@@ -24,7 +24,7 @@ const geminiModel = googleAI.getGenerativeModel({
     geminiConfig,
 });
 
-export const createSinglePredict = async (req, res) => {
+const createSinglePredict = async (req, res) => {
 
     const {
         jenis_kendaraan,
@@ -40,7 +40,6 @@ export const createSinglePredict = async (req, res) => {
         const vehicleCorrectionPrompt = `Koreksi nama unit ini dengan nama yang benar dan singkat, anda bisa cari di internet. berikan response langsung nama nya tanpa perlu Nama unit yang benar adalah : ${req.body.nama_kendaraan}. tidak boleh ada \n.`;
         const correctionResult = await geminiModel.generateContent(vehicleCorrectionPrompt);
         const correctionResponse = correctionResult.response;
-
 
         const marketPredictionPrompt = `Berikan Average Market Price untuk ${jenis_kendaraan} Bekas ${nama_kendaraan}, Tahun kendaraan ${tahun_kendaraan} jarak tempuh kendaraan ${jarak_tempuh_kendaraan} km, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar}, wilayah kendaraan ${wilayah_kendaraan} dan tanggal iklan dibuat paling terbaru dengan format json sebagai berikut:
         {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi, "link_sumber_analisa: [link1 (https://www.facebook.com/marketplace/bandung/search/?query=xxxxxx), link2 (https://www.facebook.com/marketplace/bandung/search/?query=xxxxx), link3 (https://www.facebook.com/marketplace/bandung/search/?query=xxxxx), link4 (https://www.facebook.com/marketplace/bandung/search/?query=xxxxx))], "tanggal_posting": Tanggal dibuat iklan terbaru}. buat tanpa catatan, tidak boleh ada \n tidak boleh juga ada backslash tidak boleh ada tulisan json, hanya hasil sesuai format`
@@ -63,7 +62,7 @@ export const createSinglePredict = async (req, res) => {
 
 }
 
-export const createBulkPredict = async (req, res) => {
+const createBulkPredict = async (req, res) => {
     const newData = []
     try {
         for (let i = 0; i < req.body.data.length; i++) {
@@ -125,7 +124,7 @@ export const createBulkPredict = async (req, res) => {
 }
 
 
-export const getVehicleList = async (req, res) => {
+const getVehicleList = async (req, res) => {
     const pageAsNumber = parseInt(req.query.page) || 1;
     const limitAsNumber = parseInt(req.query.limit) || 10;
     const order = req.query.order;
@@ -162,13 +161,13 @@ export const getVehicleList = async (req, res) => {
     }
 }
 
-export const getChart = async (req, res) => {
+const getChart = async (req, res) => {
     const width = 400; //px
     const height = 400; //px
     const backgroundColour = 'white'; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
     const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour });
 
-    const {chartType} = req.query
+    const { chartType } = req.query
 
     const configuration = {
         type: chartType,   // for line chart
@@ -222,7 +221,7 @@ export const getChart = async (req, res) => {
     }
 }
 
-export const updateVehicleData = async (req, res) => {
+const updateVehicleData = async (req, res) => {
     const { vehicles } = req.body;
     try {
 
@@ -241,7 +240,7 @@ export const updateVehicleData = async (req, res) => {
     }
 }
 
-export const getVehicleType = async (req, res) => {
+const getVehicleType = async (req, res) => {
 
     try {
         const vehicles = await CarsType.findAndCountAll({
@@ -264,7 +263,7 @@ export const getVehicleType = async (req, res) => {
     }
 }
 
-export const getCarCount = async (req, res) => {
+const getCarCount = async (req, res) => {
 
     try {
         const vehicles = await CarsType.count({})
@@ -279,7 +278,7 @@ export const getCarCount = async (req, res) => {
     }
 }
 
-export const getCarTypeCount = async (req, res) => {
+const getCarTypeCount = async (req, res) => {
 
     try {
         const vehicles = await Cars.count({
@@ -297,7 +296,7 @@ export const getCarTypeCount = async (req, res) => {
     }
 }
 
-export const getOmsetPenjualan = async (req, res) => {
+const getOmsetPenjualan = async (req, res) => {
 
     try {
         const vehicles = await Cars.sum('harga_terbentuk')
@@ -312,7 +311,7 @@ export const getOmsetPenjualan = async (req, res) => {
     }
 }
 
-export const getVehicleRank = async (req, res) => {
+const getVehicleRank = async (req, res) => {
 
     try {
         const vehicles = `WITH RankedSales AS (SELECT
@@ -352,7 +351,7 @@ export const getVehicleRank = async (req, res) => {
 }
 
 
-export const getVehicleTypeList = async (req, res) => {
+const getVehicleTypeList = async (req, res) => {
     try {
         const vehicles = `select distinct jenismobil from cars.cars`
 
@@ -375,7 +374,7 @@ export const getVehicleTypeList = async (req, res) => {
     }
 }
 
-export const getPriceComparison = async (req, res) => {
+const getPriceComparison = async (req, res) => {
     const jenisMobil = req.query.jenisMobil
 
     try {
@@ -404,4 +403,19 @@ ORDER BY jenisMobil, tanggal;`
         console.log(error)
         res.status(500).json({ error: "Internal Server Error" })
     }
+}
+
+module.exports = {
+    createSinglePredict,
+    createBulkPredict,
+    getVehicleList,
+    getChart,
+    updateVehicleData,
+    getVehicleType,
+    getCarCount,
+    getCarTypeCount,
+    getOmsetPenjualan,
+    getVehicleRank,
+    getVehicleTypeList,
+    getPriceComparison,
 }

@@ -1,5 +1,5 @@
-import { Sequelize, DataTypes } from "sequelize";
-import db from "./../config/db.js";
+const { Sequelize, DataTypes } = require("sequelize");
+const db = require("./../config/db.js");
 
 const Cars = db.define('Cars', {
     id: {
@@ -90,7 +90,7 @@ const Cars = db.define('Cars', {
     // freezeTableName: true
 });
 
-export default Cars;
+module.exports = Cars;
 (async () => {
     await db.sync();
 })();

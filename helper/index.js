@@ -1,6 +1,6 @@
-import dayjs from "dayjs";
+const dayjs =  require ("dayjs");
 
-export const convDate = (date, customFormat) => {
+const convDate = (date, customFormat) => {
     const convert = () => {
       return dayjs(date).format(customFormat ? customFormat : 'YYYY-MM-DD');
     };
@@ -12,3 +12,8 @@ export const convDate = (date, customFormat) => {
       return check ? convert() : null;
     }
   };
+
+module.exports = {
+  convDate,
+
+}

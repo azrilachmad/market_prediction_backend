@@ -1,7 +1,11 @@
-import express from 'express';
-import { createBulkPredict, createSinglePredict, getCarCount, getCarTypeCount, getChart, getOmsetPenjualan, getPriceComparison, getVehicleList, getVehicleRank, getVehicleType, getVehicleTypeList, updateVehicleData } from '../controllers/vehicle.js';
+const express = require('express');
+const { createBulkPredict, createSinglePredict, getCarCount, getCarTypeCount, getChart, getOmsetPenjualan, getPriceComparison, getVehicleList, getVehicleRank, getVehicleType, getVehicleTypeList, updateVehicleData } = require('../controllers/vehicle.js');
+const signIn = require('./../controllers/auth.js');
 
 const router = express.Router()
+
+router.get('/api/login/', signIn)
+
 router.get('/api/chart/', getChart)
 router.get('/api/vehicles/', getVehicleList)
 router.get('/api/vehicles/count', getCarCount)
@@ -15,5 +19,4 @@ router.post('/api/vehicles', createSinglePredict)
 router.put('/api/vehicles', updateVehicleData)
 router.post('/api/bulk-predict', createBulkPredict)
 
-
-export default router;
+module.exports = router;
