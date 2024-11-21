@@ -1,9 +1,11 @@
 'use strict';
 const {
   Model,
-  Sequelize
+  Sequelize,
+  DataTypes
 } = require('sequelize');
 const sequelize = require('../../config/db');
+const bcrypt = require('bcrypt');
 
 
 module.exports = sequelize.define('user', {
@@ -11,35 +13,46 @@ module.exports = sequelize.define('user', {
     allowNull: false,
     autoIncrement: true,
     primaryKey: true,
-    type: Sequelize.INTEGER
+    type: DataTypes.INTEGER
   },
   userType: {
-    type: Sequelize.ENUM('0', '1', '2'),
+    type: DataTypes.ENUM('0', '1', '2'),
   },
   name: {
-    type: Sequelize.STRING
+    type: DataTypes.STRING
   },
   username: {
-    type: Sequelize.STRING
+    type: DataTypes.STRING
   },
   password: {
-    type: Sequelize.STRING
+    type: DataTypes.STRING
+  },
+  confirmPassword: {
+    type: DataTypes.VIRTUAL,
+    set(value) {
+      if (value === this.password) {
+        const hashPassword = bcrypt.hashSync(value, 10);
+        this.setDataValue('password', hashPassword)
+      } else {
+        throw new Error('Passwords do not match')
+      }
+    }
   },
   createdAt: {
     allowNull: false,
-    type: Sequelize.DATE
+    type: DataTypes.DATE
   },
   updatedAt: {
     allowNull: false,
-    type: Sequelize.DATE
+    type: DataTypes.DATE
   },
   deletedAt: {
-    type: Sequelize.DATE
-  }
+    type: DataTypes.DATE
+  },
 },
   {
     freezeTableName: true,
     modelName: 'user',
     paranoid: true,
-  }
-)
+    schema: 'cars',
+  });
