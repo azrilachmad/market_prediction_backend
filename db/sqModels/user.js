@@ -11,7 +11,7 @@ const bcrypt = require('bcrypt');
 const AppError = require('../../utils/appError');
 
 
-module.exports = sequelize.define('user', {
+const user  = sequelize.define('user', {
   id: {
     allowNull: false,
     autoIncrement: true,
@@ -100,3 +100,5 @@ module.exports = sequelize.define('user', {
     modelName: 'user',
     paranoid: true,
   });
+
+module.exports = user

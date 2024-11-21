@@ -265,6 +265,7 @@ const getVehicleType = catchAsync(async (req, res) => {
 })
 
 const getCarCount = catchAsync(async (req, res) => {
+
     try {
         const vehicles = await CarsType.count({})
         res.json({

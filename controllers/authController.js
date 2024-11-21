@@ -104,8 +104,7 @@ const restrictTo = (...userType) => {
     const checkPermission = async (req, res, next) => {
 
         const role = await req.user
-        console.log(role)
-        
+
         if (!userType.includes(role.dataValues.userType)) {
             return next(new AppError('You do not have permission to perform this action', 403))
         }
