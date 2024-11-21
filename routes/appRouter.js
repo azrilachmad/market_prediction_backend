@@ -5,7 +5,7 @@ const {signIn, signUp} = require('./../controllers/authController.js');
 const router = express.Router()
 
 router.post('/api/register/', signUp)
-router.get('/api/login/', signIn)
+router.post('/api/login/', signIn)
 
 router.get('/api/chart/', getChart)
 router.get('/api/vehicles/', getVehicleList)

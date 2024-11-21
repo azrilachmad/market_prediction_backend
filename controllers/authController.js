@@ -1,4 +1,14 @@
+require('dotenv').config()
 const user = require('../db/sqModels/user')
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
+
+
+const generateToken = (payload) => {
+    return jwt.sign(payload, process.env.JWT_SECRET_KEY, {
+        expiresIn: process.env.JWT_EXPIRE_IN
+    })
+}
 
 const signUp = async (req, res) => {
     const body = req.body;
@@ -11,14 +21,29 @@ const signUp = async (req, res) => {
         })
     }
 
-    const newUser = user.create({
+    if (body.password !== body.confirmPassword) return res.status(400).json({
+        status: 'Failed',
+        message: "Password does not match"
+    })
+
+    const newUser = await user.create({
         userType: body.userType,
         name: body.name,
-        username: body.email,
+        username: body.username,
         password: body.password,
+        confirmPassword: body.confirmPassword
     });
 
-    if (!newUser) {
+    const result = newUser.toJSON()
+
+    delete result.password
+    delete result.deletedAt
+
+    result.token = generateToken({
+
+    })
+
+    if (!result) {
         return res.status(400).json({
             status: 'Failed',
             message: 'Failed to create user'
@@ -27,20 +52,37 @@ const signUp = async (req, res) => {
 
     return res.status(201).json({
         status: 'Success',
-        data: newUser,
+        data: result,
     })
 }
 
+
 const signIn = async (req, res) => {
-    try {
-        res.json({
-            status: 'success',
-            messagg: 'Sign in router are working'
+    const {username, password} = req.body
+
+    if (!username || !password) {
+        return req.status(400).json({
+            status: 'Failed',
+            message: 'Please enter a username and password'
         })
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: "Internal Server Error" })
     }
+
+    const result = await user.findOne({where: {username: username}})
+    if(!result || !(await bcrypt.compare(password, result.password))) {
+        return res.status(401).json({
+            status: 'Failed',
+            message: 'Invalid username or password'
+        })
+    }
+
+    const token = generateToken({
+        id: result.id
+    })
+
+    return res.json({
+        status: 'Success',
+        token,
+    })
 }
 
-module.exports = { signIn, signUp }
+module.exports = { signUp, signIn }
