@@ -1,5 +1,7 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const db = require("./../config/db.js");
+require('dotenv').config()
+
 
 const Cars = db.define('Cars', {
     id: {
@@ -86,7 +88,6 @@ const Cars = db.define('Cars', {
     timestamps: true,
     updatedAt: 'updated_at',
     createdAt: 'created_at',
-    schema: 'cars',
     // freezeTableName: true
 });
 

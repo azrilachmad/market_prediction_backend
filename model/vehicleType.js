@@ -1,5 +1,7 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const db = require("../config/db.js");
+require('dotenv').config()
+
 
 const CarsType = db.define('Cars', {
     jenismobil: {
@@ -10,11 +12,11 @@ const CarsType = db.define('Cars', {
     timestamps: true,
     updatedAt: 'updated_at',
     createdAt: 'created_at',
-    schema: 'cars',
+    schema: 'public',
     // freezeTableName: true
 });
 
-module.export = CarsType;
+module.exports = CarsType;
 (async () => {
     await db.sync();
 })();
