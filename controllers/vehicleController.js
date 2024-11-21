@@ -6,6 +6,7 @@ const Cars = require("../model/vehicleModel.js");
 const CarsType = require("../model/vehicleType.js");
 const sequelize = require("../config/db.js");
 const { convDate } = require("../helper/index.js");
+const catchAsync = require('../utils/catchAsync.js');
 
 const fs = ('fs');
 const { ChartJSNodeCanvas } = ("chartjs-node-canvas");
@@ -24,7 +25,7 @@ const geminiModel = googleAI.getGenerativeModel({
     geminiConfig,
 });
 
-const createSinglePredict = async (req, res) => {
+const createSinglePredict = catchAsync(async (req, res) => {
 
     const {
         jenis_kendaraan,
@@ -60,9 +61,9 @@ const createSinglePredict = async (req, res) => {
         });
     }
 
-}
+})
 
-const createBulkPredict = async (req, res) => {
+const createBulkPredict = catchAsync(async (req, res) => {
     const newData = []
     try {
         for (let i = 0; i < req.body.data.length; i++) {
@@ -121,10 +122,10 @@ const createBulkPredict = async (req, res) => {
         console.log("response error", error);
     }
 
-}
+})
 
 
-const getVehicleList = async (req, res) => {
+const getVehicleList = catchAsync(async (req, res) => {
     const pageAsNumber = parseInt(req.query.page) || 1;
     const limitAsNumber = parseInt(req.query.limit) || 10;
     const order = req.query.order;
@@ -159,9 +160,9 @@ const getVehicleList = async (req, res) => {
         console.log(error)
         res.status(500).json({ error: "Internal Server Error" })
     }
-}
+})
 
-const getChart = async (req, res) => {
+const getChart = catchAsync(async (req, res) => {
     const width = 400; //px
     const height = 400; //px
     const backgroundColour = 'white'; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
@@ -219,9 +220,9 @@ const getChart = async (req, res) => {
         console.log(error)
         res.status(500).json({ error: "Internal Server Error" })
     }
-}
+})
 
-const updateVehicleData = async (req, res) => {
+const updateVehicleData = catchAsync(async (req, res) => {
     const { vehicles } = req.body;
     try {
 
@@ -238,9 +239,9 @@ const updateVehicleData = async (req, res) => {
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
-}
+})
 
-const getVehicleType = async (req, res) => {
+const getVehicleType = catchAsync(async (req, res) => {
 
     try {
         const vehicles = await CarsType.findAndCountAll({
@@ -261,10 +262,9 @@ const getVehicleType = async (req, res) => {
         console.log(error)
         res.status(500).json({ error: "Internal Server Error" })
     }
-}
+})
 
-const getCarCount = async (req, res) => {
-
+const getCarCount = catchAsync(async (req, res) => {
     try {
         const vehicles = await CarsType.count({})
         res.json({
@@ -276,9 +276,9 @@ const getCarCount = async (req, res) => {
         console.log(error)
         res.status(500).json({ error: "Internal Server Error" })
     }
-}
+})
 
-const getCarTypeCount = async (req, res) => {
+const getCarTypeCount = catchAsync(async (req, res) => {
 
     try {
         const vehicles = await Cars.count({
@@ -294,9 +294,9 @@ const getCarTypeCount = async (req, res) => {
         console.log(error)
         res.status(500).json({ error: "Internal Server Error" })
     }
-}
+})
 
-const getOmsetPenjualan = async (req, res) => {
+const getOmsetPenjualan = catchAsync(async (req, res) => {
 
     try {
         const vehicles = await Cars.sum('harga_terbentuk')
@@ -309,9 +309,9 @@ const getOmsetPenjualan = async (req, res) => {
         console.log(error)
         res.status(500).json({ error: "Internal Server Error" })
     }
-}
+})
 
-const getVehicleRank = async (req, res) => {
+const getVehicleRank = catchAsync(async (req, res) => {
 
     try {
         const vehicles = `WITH RankedSales AS (SELECT
@@ -348,10 +348,10 @@ const getVehicleRank = async (req, res) => {
         console.log(error)
         res.status(500).json({ error: "Internal Server Error" })
     }
-}
+})
 
 
-const getVehicleTypeList = async (req, res) => {
+const getVehicleTypeList = catchAsync(async (req, res) => {
     try {
         const vehicles = `select distinct jenismobil from cars.cars`
 
@@ -372,9 +372,9 @@ const getVehicleTypeList = async (req, res) => {
         console.log(error)
         res.status(500).json({ error: "Internal Server Error" })
     }
-}
+})
 
-const getPriceComparison = async (req, res) => {
+const getPriceComparison = catchAsync(async (req, res) => {
     const jenisMobil = req.query.jenisMobil
 
     try {
@@ -403,7 +403,7 @@ ORDER BY jenisMobil, tanggal;`
         console.log(error)
         res.status(500).json({ error: "Internal Server Error" })
     }
-}
+})
 
 module.exports = {
     createSinglePredict,

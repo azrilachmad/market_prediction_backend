@@ -7,7 +7,6 @@ module.exports = {
     "database": process.env.DB_NAME,
     "host": process.env.DB_HOST,
     "dialect": "postgres",
-    "migrationStorageTableSchema": "cars"
   },
   "production": {
     "username": process.env.DB_USERNAME,
@@ -15,6 +14,5 @@ module.exports = {
     "database": process.env.DB_NAME,
     "host": process.env.DB_HOST,
     "dialect": "postgres",
-    "migrationStorageTableSchema": "cars"
   }
 }

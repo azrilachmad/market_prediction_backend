@@ -2,6 +2,8 @@ require('dotenv').config()
 const user = require('../db/sqModels/user')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
+const catchAsync = require('../utils/catchAsync')
+const AppError = require('../utils/appError')
 
 
 const generateToken = (payload) => {
@@ -10,15 +12,12 @@ const generateToken = (payload) => {
     })
 }
 
-const signUp = async (req, res) => {
+const signUp = catchAsync(async (req, res, next) => {
     const body = req.body;
     console.log(body);
 
     if (!['1', '2'].includes(body.userType)) {
-        return res.status(400).json({
-            status: 'Failed',
-            message: "Invalid user type"
-        })
+        throw new AppError('Invalid User Type', 400)
     }
 
     if (body.password !== body.confirmPassword) return res.status(400).json({
@@ -29,10 +28,14 @@ const signUp = async (req, res) => {
     const newUser = await user.create({
         userType: body.userType,
         name: body.name,
-        username: body.username,
+        email: body.email,
         password: body.password,
         confirmPassword: body.confirmPassword
     });
+
+    if (!newUser) {
+        throw new AppError('Failed to create the user', 400)
+    }
 
     const result = newUser.toJSON()
 
@@ -40,39 +43,25 @@ const signUp = async (req, res) => {
     delete result.deletedAt
 
     result.token = generateToken({
-
+        id: result.id
     })
-
-    if (!result) {
-        return res.status(400).json({
-            status: 'Failed',
-            message: 'Failed to create user'
-        })
-    }
 
     return res.status(201).json({
         status: 'Success',
         data: result,
     })
-}
+})
 
+const signIn = catchAsync(async (req, res, next) => {
+    const { email, password } = req.body
 
-const signIn = async (req, res) => {
-    const {username, password} = req.body
-
-    if (!username || !password) {
-        return req.status(400).json({
-            status: 'Failed',
-            message: 'Please enter a username and password'
-        })
+    if (!email || !password) {
+        return next(new AppError('Please provide email and password', 400))
     }
 
-    const result = await user.findOne({where: {username: username}})
-    if(!result || !(await bcrypt.compare(password, result.password))) {
-        return res.status(401).json({
-            status: 'Failed',
-            message: 'Invalid username or password'
-        })
+    const result = await user.findOne({ where: { email: email } })
+    if (!result || !(await bcrypt.compare(password, result.password))) {
+        return next(new AppError('Incorrect email or password', 400))
     }
 
     const token = generateToken({
@@ -83,6 +72,47 @@ const signIn = async (req, res) => {
         status: 'Success',
         token,
     })
+})
+
+const authentication = catchAsync(async (req, res, next) => {
+    // 1. Get token from headers
+    let idToken = ''
+    if (req.headers.authorization &&
+        req.headers.authorization.startsWith('Bearer')
+    ) {
+        // bearer token
+        idToken = req.headers.authorization.split(' ')[1]
+    }
+    if (!idToken) {
+        return next(new AppError('Please login to get access', 401))
+    }
+
+    // 2. Token verification
+    const tokenDetail = jwt.verify(idToken, process.env.JWT_SECRET_KEY)
+    // 3. Get the user detail drom db and add to req object
+    const freshUser = user.findByPk(tokenDetail.id)
+
+    if (!freshUser) {
+        return next(new AppError('User no longer exists', 400))
+    }
+
+    req.user = freshUser;
+    return next()
+})
+
+const restrictTo = (...userType) => {
+    const checkPermission = async (req, res, next) => {
+
+        const role = await req.user
+        console.log(role)
+        
+        if (!userType.includes(role.dataValues.userType)) {
+            return next(new AppError('You do not have permission to perform this action', 403))
+        }
+        return next()
+    }
+    return checkPermission;
 }
 
-module.exports = { signUp, signIn }
+
+module.exports = { signUp, signIn, authentication, restrictTo }
