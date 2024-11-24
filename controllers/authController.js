@@ -98,7 +98,11 @@ const getUser = catchAsync ( async (req, res, next) => {
 })
 
 const logout = catchAsync(async (req, res, next) => {
-    const {token} = req.body
+    res.cookie('jwt', '', {maxAge: 0})
+
+    res.json({
+        message: 'Successfully logged out'
+    })
 })
 
 const authentication = catchAsync(async (req, res, next) => {
@@ -141,4 +145,4 @@ const restrictTo = (...userType) => {
 }
 
 
-module.exports = { signUp, signIn, getUser, authentication, restrictTo }
+module.exports = { signUp, signIn, logout, getUser, authentication, restrictTo }
