@@ -69,7 +69,6 @@ const signIn = catchAsync(async (req, res, next) => {
     res.cookie('jwt', token, {
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000, // 1 Day
-
     })
 
     return res.json({
@@ -82,9 +81,12 @@ const signIn = catchAsync(async (req, res, next) => {
 
 const getUser = catchAsync(async (req, res, next) => {
 
-    const { token } = req.body
+    const token = req.header('authorization');
+    const cookie = token.replace('Bearer ', '')
+    console.log(cookie)
 
-    const claims = jwt.verify(token, process.env.JWT_SECRET_KEY)
+
+    const claims = jwt.verify(cookie, process.env.JWT_SECRET_KEY)
 
     if (!claims) {
         return next(new AppError('Unauthenticated', 401))
