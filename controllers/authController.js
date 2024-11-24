@@ -64,7 +64,7 @@ const signIn = catchAsync(async (req, res, next) => {
         return next(new AppError('Incorrect email or password', 400))
     }
 
-    const token = jwt.sign({ id: result._id}, process.env.JWT_SECRET_KEY)
+    const token = jwt.sign({ id: result._id }, process.env.JWT_SECRET_KEY)
 
     res.cookie('jwt', token, {
         httpOnly: true,
@@ -73,14 +73,16 @@ const signIn = catchAsync(async (req, res, next) => {
     })
 
     return res.json({
-        status: 'Success',
-        token,
+        data: {
+            status: 'Success',
+            token,
+        }
     })
 })
 
-const getUser = catchAsync ( async (req, res, next) => {
+const getUser = catchAsync(async (req, res, next) => {
 
-    const {token} = req.body
+    const { token } = req.body
 
     const claims = jwt.verify(token, process.env.JWT_SECRET_KEY)
 
@@ -88,9 +90,9 @@ const getUser = catchAsync ( async (req, res, next) => {
         return next(new AppError('Unauthenticated', 401))
     }
 
-    const userData = await user.findOne({id: claims.id})
+    const userData = await user.findOne({ id: claims.id })
 
-    const {password, createdAt, deletedAt, updatedAt, ...data} = await userData.toJSON()
+    const { password, createdAt, deletedAt, updatedAt, ...data } = await userData.toJSON()
 
     return res.json({
         data
@@ -98,7 +100,7 @@ const getUser = catchAsync ( async (req, res, next) => {
 })
 
 const logout = catchAsync(async (req, res, next) => {
-    res.cookie('jwt', '', {maxAge: 0})
+    res.cookie('jwt', '', { maxAge: 0 })
 
     res.json({
         message: 'Successfully logged out'
