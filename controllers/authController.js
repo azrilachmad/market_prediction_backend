@@ -64,14 +64,41 @@ const signIn = catchAsync(async (req, res, next) => {
         return next(new AppError('Incorrect email or password', 400))
     }
 
-    const token = generateToken({
-        id: result.id
+    const token = jwt.sign({ id: result._id}, process.env.JWT_SECRET_KEY)
+
+    res.cookie('jwt', token, {
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 1 Day
+
     })
 
     return res.json({
         status: 'Success',
         token,
     })
+})
+
+const getUser = catchAsync ( async (req, res, next) => {
+
+    const {token} = req.body
+
+    const claims = jwt.verify(token, process.env.JWT_SECRET_KEY)
+
+    if (!claims) {
+        return next(new AppError('Unauthenticated', 401))
+    }
+
+    const userData = await user.findOne({id: claims.id})
+
+    const {password, createdAt, deletedAt, updatedAt, ...data} = await userData.toJSON()
+
+    return res.json({
+        data
+    })
+})
+
+const logout = catchAsync(async (req, res, next) => {
+    const {token} = req.body
 })
 
 const authentication = catchAsync(async (req, res, next) => {
@@ -114,4 +141,4 @@ const restrictTo = (...userType) => {
 }
 
 
-module.exports = { signUp, signIn, authentication, restrictTo }
+module.exports = { signUp, signIn, getUser, authentication, restrictTo }
