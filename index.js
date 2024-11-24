@@ -17,7 +17,9 @@ const authRoute = require('./routes/authRoute.js')
 
 
 
-app.use(cors());
+app.use(cors({
+    credentials: true
+}));
 app.use(express.json());
 
 db.authenticate()
