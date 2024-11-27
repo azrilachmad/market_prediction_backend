@@ -321,7 +321,7 @@ const getVehicleRank = catchAsync(async (req, res) => {
                 DATE_TRUNC('month', tanggal_jual) AS tanggal,
                 SUM(harga_terbentuk) AS sum_harga_terbentuk,
                 ROW_NUMBER() OVER (PARTITION BY TO_CHAR(DATE_TRUNC('month', tanggal_jual), 'Month') ORDER BY SUM(harga_terbentuk) DESC) AS peringkat
-            FROM cars.cars
+            FROM cars
             GROUP BY jenismobil, DATE_TRUNC('month', tanggal_jual)
         )
         SELECT *
@@ -354,7 +354,7 @@ const getVehicleRank = catchAsync(async (req, res) => {
 
 const getVehicleTypeList = catchAsync(async (req, res) => {
     try {
-        const vehicles = `select distinct jenismobil from cars.cars`
+        const vehicles = `select distinct jenismobil from cars`
 
         const result = await sequelize.query(vehicles)
         res.json({
@@ -386,7 +386,7 @@ const getPriceComparison = catchAsync(async (req, res) => {
            ROUND(AVG(harga_atas)) AS avg_top_price, 
            ROUND(AVG(harga_bawah)) AS avg_bottom_price, 
            ROUND(AVG(harga_terbentuk)) AS avg_actual_sold_price
-    FROM cars.cars where jenismobil like '${jenisMobil}%'
+    FROM cars where jenismobil like '${jenisMobil}%'
     GROUP BY jenisMobil, DATE_TRUNC('month', tanggal_jual)
 ) AS subquery
 ORDER BY jenisMobil, tanggal;`

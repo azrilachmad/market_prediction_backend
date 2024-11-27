@@ -5,7 +5,7 @@ const router = require('express').Router()
 
 router.get('/api/chart/', getChart)
 router.get('/api/vehicles/', authentication, getVehicleList)
-router.get('/api/vehicles/count', authentication, restrictTo('1'), getCarCount)
+router.get('/api/vehicles/count', authentication, getCarCount)
 router.get('/api/vehicles/count-type', authentication, getCarTypeCount)
 router.get('/api/vehicles/omset', authentication, getOmsetPenjualan)
 router.get('/api/vehicles/sales', authentication, getVehicleRank)
