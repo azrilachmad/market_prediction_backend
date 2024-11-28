@@ -13,6 +13,7 @@ const globalErrorHandler = require('./controllers/errorController.js')
 // Define every route
 const vehicleRoute = require('./routes/vehicleRoute.js')
 const authRoute = require('./routes/authRoute.js')
+const userRoute = require('./routes/userRoute.js')
 
 
 
@@ -28,6 +29,7 @@ db.authenticate()
 
 app.use(vehicleRoute);
 app.use(authRoute);
+app.use(userRoute);
 
 
 app.use('*', catchAsync(async (req, res, next) => {

@@ -79,27 +79,6 @@ const signIn = catchAsync(async (req, res, next) => {
     })
 })
 
-const getUser = catchAsync(async (req, res, next) => {
-
-    const token = req.header('authorization');
-    const cookie = token.replace('Bearer ', '')
-    console.log(cookie)
-
-
-    const claims = jwt.verify(cookie, process.env.JWT_SECRET_KEY)
-
-    if (!claims) {
-        return next(new AppError('Unauthenticated', 401))
-    }
-
-    const userData = await user.findOne({ id: claims.id })
-
-    const { password, createdAt, deletedAt, updatedAt, ...data } = await userData.toJSON()
-
-    return res.json({
-        data
-    })
-})
 
 const logout = catchAsync(async (req, res, next) => {
     res.cookie('jwt', '', { maxAge: 0 })
@@ -149,4 +128,4 @@ const restrictTo = (...userType) => {
 }
 
 
-module.exports = { signUp, signIn, logout, getUser, authentication, restrictTo }
+module.exports = { signUp, signIn, logout, authentication, restrictTo }
