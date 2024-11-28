@@ -35,6 +35,7 @@ const getUser = catchAsync(async (req, res, next) => {
     const cookie = token.replace('Bearer ', '')
 
     const claims = jwt.verify(cookie, process.env.JWT_SECRET_KEY)
+    const id = claims.id
 
     if (!claims) {
         return next(new AppError('Unauthenticated', 401))
@@ -43,9 +44,8 @@ const getUser = catchAsync(async (req, res, next) => {
     const userData = await user.findOne({ id: claims.id })
 
     const { password, createdAt, deletedAt, updatedAt, ...data } = await userData.toJSON()
-
     return res.json({
-        data
+        data,
     })
 })
 

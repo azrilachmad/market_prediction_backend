@@ -14,7 +14,6 @@ const generateToken = (payload) => {
 
 const signUp = catchAsync(async (req, res, next) => {
     const body = req.body;
-    console.log(body);
 
     if (!['1', '2'].includes(body.userType)) {
         throw new AppError('Invalid User Type', 400)
@@ -64,7 +63,7 @@ const signIn = catchAsync(async (req, res, next) => {
         return next(new AppError('Incorrect email or password', 400))
     }
 
-    const token = jwt.sign({ id: result._id }, process.env.JWT_SECRET_KEY)
+    const token = jwt.sign({ id: result.id }, process.env.JWT_SECRET_KEY)
 
     res.cookie('jwt', token, {
         httpOnly: true,
@@ -105,10 +104,12 @@ const authentication = catchAsync(async (req, res, next) => {
     const tokenDetail = jwt.verify(idToken, process.env.JWT_SECRET_KEY)
     // 3. Get the user detail drom db and add to req object
     const freshUser = user.findByPk(tokenDetail.id)
+    user.update({ id: tokenDetail.id }, { where: { id: tokenDetail.id } });
 
     if (!freshUser) {
         return next(new AppError('User no longer exists', 400))
     }
+
 
     req.user = freshUser;
     return next()
