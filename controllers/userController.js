@@ -2,7 +2,14 @@ require('dotenv').config()
 const user = require('../db/sqModels/user')
 const catchAsync = require("../utils/catchAsync");
 const AppError = require('../utils/appError')
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
+
+const generateToken = (payload) => {
+    return jwt.sign(payload, process.env.JWT_SECRET_KEY, {
+        expiresIn: process.env.JWT_EXPIRE_IN
+    })
+}
 
 const getAllUser = catchAsync(async (req, res, next) => {
 
@@ -49,5 +56,78 @@ const getUser = catchAsync(async (req, res, next) => {
     })
 })
 
+const createUser = catchAsync(async (req, res, next) => {
+    // Validation inside controller
+    await body('userType')
+        .notEmpty()
+        .withMessage('Name is required')
+        .run(req);
 
-module.exports = { getUser, getAllUser }
+    await body('email')
+        .notEmpty()
+        .withMessage('Email is required')
+        .isEmail()
+        .withMessage('Invalid email address')
+        .custom(async (value) => {
+            const userExist = await user.findOne({ where: { email: value } });
+            if (userExist) {
+                throw new Error('Email already exists');
+            }
+        })
+        .run(req);
+
+    await body('password')
+        .notEmpty()
+        .withMessage('Password is required')
+        .isLength({ min: 6 })
+        .withMessage('Password must be at least 6 characters long')
+        .matches(/\d/)
+        .run(req);
+
+    await body('confirmPassword')
+        .custom((value, { req }) => value === req.body.password)
+        .withMessage('Passwords do not match')
+        .run(req);
+
+    await body('name')
+        .notEmpty()
+        .withMessage('Name is required')
+        .run(req);
+
+    // Check validation result after running all validators
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            status: 'Failed',
+            errors: errors.array(),
+        });
+    }
+
+    const { userType, name, email, password, confirmPassword } = req.body;
+
+    const newUser = await user.create({
+        userType,
+        name,
+        email,
+        password,
+        confirmPassword
+    });
+
+    if (!newUser) {
+        throw new AppError('Failed to create the user', 400);
+    }
+
+    const result = newUser.toJSON();
+    delete result.password;
+    delete result.deletedAt;
+
+    result.token = generateToken({ id: result.id });
+
+    return res.status(201).json({
+        status: 'Success',
+        data: result,
+    });
+});
+
+
+module.exports = { getUser, getAllUser, createUser }

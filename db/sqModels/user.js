@@ -11,7 +11,7 @@ const bcrypt = require('bcrypt');
 const AppError = require('../../utils/appError');
 
 
-const user  = sequelize.define('user', {
+const user = sequelize.define('user', {
   id: {
     allowNull: false,
     autoIncrement: true,
@@ -72,7 +72,7 @@ const user  = sequelize.define('user', {
   confirmPassword: {
     type: DataTypes.VIRTUAL,
     set(value) {
-      if(this.password.length < 7) {
+      if (this.password.length < 7) {
         throw new AppError('Password length must be more than 7 characters', 400)
       }
       if (value === this.password) {
@@ -82,6 +82,9 @@ const user  = sequelize.define('user', {
         throw new Error('Passwords do not match')
       }
     }
+  },
+  last_activity: {
+    type: Sequelize.DATE
   },
   createdAt: {
     allowNull: false,

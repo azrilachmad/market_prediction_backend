@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 const catchAsync = require('../utils/catchAsync')
 const AppError = require('../utils/appError')
+const sequelize = require('../config/db')
 
 
 const generateToken = (payload) => {
@@ -104,7 +105,7 @@ const authentication = catchAsync(async (req, res, next) => {
     const tokenDetail = jwt.verify(idToken, process.env.JWT_SECRET_KEY)
     // 3. Get the user detail drom db and add to req object
     const freshUser = user.findByPk(tokenDetail.id)
-    user.update({ id: tokenDetail.id }, { where: { id: tokenDetail.id } });
+    user.update({ id: tokenDetail.id, last_activity: sequelize.literal('CURRENT_TIMESTAMP') }, { where: { id: tokenDetail.id } });
 
     if (!freshUser) {
         return next(new AppError('User no longer exists', 400))

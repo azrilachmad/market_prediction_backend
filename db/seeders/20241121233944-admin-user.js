@@ -10,6 +10,7 @@ module.exports = {
       name: process.env.ADMIN_NAME,
       email: process.env.ADMIN_EMAIL,
       password: hashPassword,
+      last_activity: new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
     }]);
