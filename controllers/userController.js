@@ -60,18 +60,22 @@ const createUser = catchAsync(async (req, res, next) => {
     // Validation inside controller
     await body('userType')
         .notEmpty()
-        .withMessage('Name is required')
+        .withMessage('Role is required')
         .run(req);
 
     await body('email')
         .notEmpty()
         .withMessage('Email is required')
+        .bail()
         .isEmail()
         .withMessage('Invalid email address')
+        .bail()
         .custom(async (value) => {
-            const userExist = await user.findOne({ where: { email: value } });
-            if (userExist) {
-                throw new Error('Email already exists');
+            if(value) {
+                const userExist = await user.findOne({ where: { email: value } });
+                if (userExist) {
+                    throw new Error('Email already exists');
+                }
             }
         })
         .run(req);
@@ -81,7 +85,6 @@ const createUser = catchAsync(async (req, res, next) => {
         .withMessage('Password is required')
         .isLength({ min: 6 })
         .withMessage('Password must be at least 6 characters long')
-        .matches(/\d/)
         .run(req);
 
     await body('confirmPassword')
@@ -97,20 +100,25 @@ const createUser = catchAsync(async (req, res, next) => {
     // Check validation result after running all validators
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        // Format errors into a single object
+        const formattedErrors = errors.array().reduce((acc, error) => {
+            acc[error.path] = error.msg; // Map field to message
+            return acc;
+        }, {});
+
         return res.status(400).json({
             status: 'Failed',
-            errors: errors.array(),
+            errors: formattedErrors,
         });
     }
 
-    const { userType, name, email, password, confirmPassword } = req.body;
+    const { userType, name, email, password } = req.body;
 
     const newUser = await user.create({
         userType,
         name,
         email,
         password,
-        confirmPassword
     });
 
     if (!newUser) {
@@ -128,6 +136,7 @@ const createUser = catchAsync(async (req, res, next) => {
         data: result,
     });
 });
+
 
 
 module.exports = { getUser, getAllUser, createUser }
