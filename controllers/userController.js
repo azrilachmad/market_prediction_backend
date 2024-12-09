@@ -4,6 +4,7 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require('../utils/appError')
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
+const { Op } = require('sequelize');
 
 const generateToken = (payload) => {
     return jwt.sign(payload, process.env.JWT_SECRET_KEY, {
@@ -137,6 +138,92 @@ const createUser = catchAsync(async (req, res, next) => {
     });
 });
 
+const editUser = catchAsync(async (req, res, next) => {
+    // Find the user by ID from the route parameter
+    const existingUser = await user.findByPk(req.params.id);
+    if (!existingUser) {
+        return res.status(404).json({
+            status: 'Failed',
+            message: 'User not found',
+        });
+    }
+
+    // Validation for updating user fields
+    await body('userType')
+        .optional() // Allow this field to be optional
+        .notEmpty()
+        .withMessage('Role is required')
+        .run(req);
+
+    await body('email')
+        .optional() // Allow this field to be optional
+        .isEmail()
+        .withMessage('Invalid email address')
+        .bail()
+        .custom(async (value) => {
+            if (value) {
+                const userExist = await user.findOne({ 
+                    where: { email: value, id: { [Op.ne]: req.params.id } } 
+                }); // Ensure no other user has the same email
+                if (userExist) {
+                    throw new Error('Email already exists');
+                }
+            }
+        })
+        .run(req);
+
+    await body('password')
+        .optional()
+        .isLength({ min: 6 })
+        .withMessage('Password must be at least 6 characters long')
+        .run(req);
+
+    await body('confirmPassword')
+        .optional()
+        .custom((value, { req }) => value === req.body.password)
+        .withMessage('Passwords do not match')
+        .run(req);
+
+    await body('name')
+        .optional()
+        .notEmpty()
+        .withMessage('Name is required')
+        .run(req);
+
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const formattedErrors = errors.array().reduce((acc, error) => {
+            acc[error.path] = error.msg;
+            return acc;
+        }, {});
+
+        return res.status(400).json({
+            status: 'Failed',
+            errors: formattedErrors,
+        });
+    }
+
+    // Update the user with validated fields
+    const { userType, name, email, password } = req.body;
+
+    if (userType) existingUser.userType = userType;
+    if (name) existingUser.name = name;
+    if (email) existingUser.email = email;
+    if (password) existingUser.password = password;
+
+    await existingUser.save();
+
+    const result = existingUser.toJSON();
+    delete result.password;
+    delete result.deletedAt;
+
+    return res.status(200).json({
+        status: 'Success',
+        data: result,
+    });
+});
 
 
-module.exports = { getUser, getAllUser, createUser }
+
+module.exports = { getUser, getAllUser, createUser, editUser }
