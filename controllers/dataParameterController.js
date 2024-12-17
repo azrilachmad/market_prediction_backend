@@ -1,5 +1,5 @@
 require('dotenv').config()
-const user = require('../db/sqModels/user')
+const dataParameter = require('../db/sqModels/dataParameter')
 const catchAsync = require("../utils/catchAsync");
 const AppError = require('../utils/appError')
 const jwt = require('jsonwebtoken');
@@ -18,7 +18,8 @@ const getAllDataParameter = catchAsync(async (req, res, next) => {
 
     const pageAsNumber = parseInt(req.query.page) || 1;
     const limitAsNumber = parseInt(req.query.limit) || 10;
-    const order = req.query.order;
+    const order = req.query.order || 'asc';
+    sortBy = req.query.sortBy || 'updatedAt'
 
     let page = 0;
     if (!Number.isNaN(pageAsNumber) && pageAsNumber > 0) {
@@ -30,95 +31,40 @@ const getAllDataParameter = catchAsync(async (req, res, next) => {
         page = limitAsNumber;
     }
 
-    const token = req.header('authorization');
 
-    const userList = await user.findAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [['updatedAt', 'ASC']] })
+    const dataParameterList = await dataParameter.findAndCountAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy, order]] })
 
     res.json({
-        data: userList
+        data: dataParameterList.rows,
+        error: false,
+        message: "OK - The request was successfull",
+        meta: {
+            page: req.query.page,
+            perPage: limit.toString(),
+            total: dataParameterList.count,
+            totalPages: Math.ceil(dataParameterList.count / limit)
+        }
     })
 })
 
-const getUser = catchAsync(async (req, res, next) => {
-    // Step 1: Extract token from Authorization header
-    const token = req.header('authorization');
-    if (!token) {
-        return next(new AppError('Unauthenticated: No token provided', 401));
-    }
 
-    // Step 2: Remove 'Bearer ' prefix and verify the token
-    const cookie = token.replace('Bearer ', '');
-    
-    let claims;
-    try {
-        claims = jwt.verify(cookie, process.env.JWT_SECRET_KEY);
-    } catch (error) {
-        return next(new AppError('Invalid or expired token', 401));
-    }
-
-    // Step 3: Check if token contains the user id
-    if (!claims || !claims.id) {
-        return next(new AppError('Unauthorized: Invalid token', 401));
-    }
-
-    // Step 4: Fetch user data from database using the decoded id
-    const userData = await user.findOne({
-        where: { id: claims.id }, // Correct usage of `where`
-    });
-
-    if (!userData) {
-        return next(new AppError('User not found', 404));
-    }
-
-    // Step 5: Exclude sensitive data like password, timestamps, etc.
-    const { password, createdAt, deletedAt, updatedAt, ...data } = await userData.toJSON();
-
-    // Step 6: Return user data excluding sensitive fields
-    return res.json({
-        status: 'Success',
-        data,
-    });
-});
-
-const createUser = catchAsync(async (req, res, next) => {
+const createDataParameter = catchAsync(async (req, res, next) => {
     // Validation inside controller
-    await body('userType')
+    await body('parameter')
         .notEmpty()
-        .withMessage('Role is required')
+        .withMessage('Parameter is required')
         .run(req);
 
-    await body('email')
+    await body('table_column')
         .notEmpty()
-        .withMessage('Email is required')
-        .bail()
-        .isEmail()
-        .withMessage('Invalid email address')
-        .bail()
-        .custom(async (value) => {
-            if (value) {
-                const userExist = await user.findOne({ where: { email: value } });
-                if (userExist) {
-                    throw new Error('Email already exists');
-                }
-            }
-        })
+        .withMessage('Table Column is required')
         .run(req);
 
-    await body('password')
+    await body('status')
         .notEmpty()
-        .withMessage('Password is required')
-        .isLength({ min: 6 })
-        .withMessage('Password must be at least 6 characters long')
-        .run(req);
-
-    await body('confirmPassword')
-        .custom((value, { req }) => value === req.body.password)
-        .withMessage('Passwords do not match')
-        .run(req);
-
-    await body('name')
-        .notEmpty()
-        .withMessage('Name is required')
+        .withMessage('Table Column is required')
+        .isBoolean()
+        .withMessage('Invalid value for Table Column')
         .run(req);
 
     // Check validation result after running all validators
@@ -136,27 +82,20 @@ const createUser = catchAsync(async (req, res, next) => {
         });
     }
 
-    const { userType, name, email, password } = req.body;
+    const { parameter, table_column, status } = req.body;
 
-    // Hash the password before saving the user
-    const hashedPassword = bcrypt.hashSync(password, 10);
-
-    const newUser = await user.create({
-        userType,
-        name,
-        email,
-        password: hashedPassword,
+    const newDataParameter = await dataParameter.create({
+        parameter,
+        table_column,
+        status,
     });
 
-    if (!newUser) {
-        throw new AppError('Failed to create the user', 400);
+    if (!newDataParameter) {
+        throw new AppError('Failed to create data parameter', 400);
     }
 
-    const result = newUser.toJSON();
-    delete result.password;
+    const result = newDataParameter.toJSON();
     delete result.deletedAt;
-
-    result.token = generateToken({ id: result.id });
 
     return res.status(201).json({
         status: 'Success',
@@ -288,4 +227,4 @@ const deleteUser = catchAsync(async (req, res, next) => {
 
 
 
-module.exports = { getUser, getAllDataParameter, createUser, editUser, deleteUser }
+module.exports = { getAllDataParameter, createDataParameter, editUser, deleteUser }

@@ -18,7 +18,8 @@ const getAllUser = catchAsync(async (req, res, next) => {
 
     const pageAsNumber = parseInt(req.query.page) || 1;
     const limitAsNumber = parseInt(req.query.limit) || 10;
-    const order = req.query.order;
+    const order = req.query.order || 'asc';
+    sortBy = req.query.sortBy || 'updatedAt'
 
     let page = 0;
     if (!Number.isNaN(pageAsNumber) && pageAsNumber > 0) {
@@ -30,12 +31,19 @@ const getAllUser = catchAsync(async (req, res, next) => {
         page = limitAsNumber;
     }
 
-    const token = req.header('authorization');
 
-    const userList = await user.findAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [['updatedAt', 'ASC']] })
+    const userList = await user.findAndCountAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy, order]] })
 
     res.json({
-        data: userList
+        data: userList.rows,
+        error: false,
+        message: "OK - The request was successfull",
+        meta: {
+            page: req.query.page,
+            perPage: limit.toString(),
+            total: userList.count,
+            totalPages: Math.ceil(userList.count / limit)
+        }
     })
 })
 
@@ -48,7 +56,7 @@ const getUser = catchAsync(async (req, res, next) => {
 
     // Step 2: Remove 'Bearer ' prefix and verify the token
     const cookie = token.replace('Bearer ', '');
-    
+
     let claims;
     try {
         claims = jwt.verify(cookie, process.env.JWT_SECRET_KEY);

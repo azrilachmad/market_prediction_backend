@@ -11,7 +11,7 @@ const bcrypt = require('bcrypt');
 const AppError = require('../../utils/appError');
 
 
-const dataParameter = sequelize.define('user', {
+const dataParameter = sequelize.define('dataParameter', {
   id: {
     allowNull: false,
     autoIncrement: true,
