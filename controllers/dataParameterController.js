@@ -104,57 +104,33 @@ const createDataParameter = catchAsync(async (req, res, next) => {
 });
 
 
-const editUser = catchAsync(async (req, res, next) => {
+const editDataParameter = catchAsync(async (req, res, next) => {
     // Find the user by ID from the route parameter
-    const existingUser = await user.findByPk(req.params.id);
-    if (!existingUser) {
+    const existingDataParameter = await dataParameter.findByPk(req.params.id);
+    if (!existingDataParameter) {
         return res.status(404).json({
             status: 'Failed',
-            message: 'User not found',
+            message: 'Data Parameter not found',
         });
     }
 
-    // Validation for updating user fields
-    await body('userType')
-        .optional() // Allow this field to be optional
-        .notEmpty()
-        .withMessage('Role is required')
-        .run(req);
+     // Validation inside controller
+     await body('parameter')
+     .notEmpty()
+     .withMessage('Parameter is required')
+     .run(req);
 
-    await body('email')
-        .optional() // Allow this field to be optional
-        .isEmail()
-        .withMessage('Invalid email address')
-        .bail()
-        .custom(async (value) => {
-            if (value) {
-                const userExist = await user.findOne({
-                    where: { email: value, id: { [Op.ne]: req.params.id } }
-                }); // Ensure no other user has the same email
-                if (userExist) {
-                    throw new Error('Email already exists');
-                }
-            }
-        })
-        .run(req);
+ await body('table_column')
+     .notEmpty()
+     .withMessage('Table Column is required')
+     .run(req);
 
-    await body('password')
-        .optional()
-        .isLength({ min: 6 })
-        .withMessage('Password must be at least 6 characters long')
-        .run(req);
-
-    await body('confirmPassword')
-        .optional()
-        .custom((value, { req }) => value === req.body.password)
-        .withMessage('Passwords do not match')
-        .run(req);
-
-    await body('name')
-        .optional()
-        .notEmpty()
-        .withMessage('Name is required')
-        .run(req);
+ await body('status')
+     .notEmpty()
+     .withMessage('Table Column is required')
+     .isBoolean()
+     .withMessage('Invalid value for Table Column')
+     .run(req);
 
     // Check for validation errors
     const errors = validationResult(req);
@@ -171,15 +147,14 @@ const editUser = catchAsync(async (req, res, next) => {
     }
 
     // Update the user with validated fields
-    const { userType, name, email, password } = req.body;
+    const { parameter, table_column, status } = req.body;
 
     // Use update method instead of save to ensure only existing users are updated
     const updateData = {};
 
-    if (userType) updateData.userType = userType;
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
-    if (password) updateData.password = bcrypt.hashSync(password, 10);
+    if (parameter) updateData.parameter = parameter;
+    if (tableColumn) updateData.tableColumn = tableColumn;
+    if (status) updateData.status = status
 
     const [updatedRowsCount, updatedRows] = await user.update(updateData, {
         where: { id: req.params.id },
@@ -189,26 +164,25 @@ const editUser = catchAsync(async (req, res, next) => {
     if (updatedRowsCount === 0) {
         return res.status(404).json({
             status: 'Failed',
-            message: 'User not found',
+            message: 'Data Parameter not found',
         });
     }
 
-    const updatedUser = updatedRows[0].toJSON(); // Get updated user instance
+    const updatedDataParameter = updatedRows[0].toJSON(); // Get updated user instance
 
     // Exclude sensitive fields
-    delete updatedUser.password;
-    delete updatedUser.deletedAt;
+    delete updatedDataParameter.deletedAt;
 
     return res.status(200).json({
         status: 'Success',
-        data: updatedUser,
+        data: updatedDataParameter,
     });
 });
 
-const deleteUser = catchAsync(async (req, res, next) => {
+const deleteDataParameter = catchAsync(async (req, res, next) => {
     // Find the user by ID from the route parameter
-    const userToDelete = await user.findByPk(req.params.id);
-    if (!userToDelete) {
+    const dataToDelete = await dataParameter.findByPk(req.params.id);
+    if (!dataToDelete) {
         return res.status(404).json({
             status: 'Failed',
             message: 'User not found',
@@ -216,15 +190,15 @@ const deleteUser = catchAsync(async (req, res, next) => {
     }
 
     // Soft delete the user (this sets the deletedAt field)
-    await userToDelete.destroy(); // This will mark the record as deleted
+    await dataToDelete.destroy(); // This will mark the record as deleted
 
     return res.status(200).json({
         status: 'Success',
-        message: 'User deleted successfully',
+        message: 'Data Parameter deleted successfully',
     });
 });
 
 
 
 
-module.exports = { getAllDataParameter, createDataParameter, editUser, deleteUser }
+module.exports = { getAllDataParameter, createDataParameter, editDataParameter, deleteDataParameter }
