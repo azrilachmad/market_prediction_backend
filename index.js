@@ -14,6 +14,7 @@ const globalErrorHandler = require('./controllers/errorController.js')
 const vehicleRoute = require('./routes/vehicleRoute.js')
 const authRoute = require('./routes/authRoute.js')
 const userRoute = require('./routes/userRoute.js')
+const dataParameterRoute = require('./routes/dataParameterRoute.js')
 
 
 
@@ -30,6 +31,7 @@ db.authenticate()
 app.use(vehicleRoute);
 app.use(authRoute);
 app.use(userRoute);
+app.use(dataParameterRoute);
 
 
 app.use('*', catchAsync(async (req, res, next) => {

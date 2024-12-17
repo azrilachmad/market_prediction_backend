@@ -14,7 +14,7 @@ const generateToken = (payload) => {
     })
 }
 
-const getAllUser = catchAsync(async (req, res, next) => {
+const getAllDataParameter = catchAsync(async (req, res, next) => {
 
     const pageAsNumber = parseInt(req.query.page) || 1;
     const limitAsNumber = parseInt(req.query.limit) || 10;
@@ -288,4 +288,4 @@ const deleteUser = catchAsync(async (req, res, next) => {
 
 
 
-module.exports = { getUser, getAllUser, createUser, editUser, deleteUser }
+module.exports = { getUser, getAllDataParameter, createUser, editUser, deleteUser }
