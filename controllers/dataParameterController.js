@@ -53,11 +53,27 @@ const createDataParameter = catchAsync(async (req, res, next) => {
     await body('parameter')
         .notEmpty()
         .withMessage('Parameter is required')
+        .custom(async (value) => {
+            if (value) {
+                const parameterExist = await dataParameter.findOne({ where: { parameter: value } });
+                if (parameterExist) {
+                    throw new Error('Parameter name already exists');
+                }
+            }
+        })
         .run(req);
 
     await body('table_column')
         .notEmpty()
         .withMessage('Table Column is required')
+        .custom(async (value) => {
+            if (value) {
+                const columnExist = await dataParameter.findOne({ where: { table_column: value } });
+                if (columnExist) {
+                    throw new Error('Table Column name already exists');
+                }
+            }
+        })
         .run(req);
 
     await body('status')
@@ -114,23 +130,43 @@ const editDataParameter = catchAsync(async (req, res, next) => {
         });
     }
 
-     // Validation inside controller
-     await body('parameter')
-     .notEmpty()
-     .withMessage('Parameter is required')
-     .run(req);
+    // Validation inside controller
+    await body('parameter')
+        .notEmpty()
+        .withMessage('Parameter is required')
+        .custom(async (value) => {
+            if (value) {
+                const parameterExist = await dataParameter.findOne({
+                    where: { parameter: value, id: { [Op.ne]: req.params.id } }
+                });
+                if (parameterExist) {
+                    throw new Error('Parameter name already exists');
+                }
+            }
+        })
+        .run(req);
 
- await body('table_column')
-     .notEmpty()
-     .withMessage('Table Column is required')
-     .run(req);
+    await body('table_column')
+        .notEmpty()
+        .withMessage('Table Column is required')
+        .custom(async (value) => {
+            if (value) {
+                const columnExist = await dataParameter.findOne({
+                    where: { table_column: value, id: { [Op.ne]: req.params.id } }
+                });
+                if (columnExist) {
+                    throw new Error('Table Column name already exists');
+                }
+            }
+        })
+        .run(req);
 
- await body('status')
-     .notEmpty()
-     .withMessage('Table Column is required')
-     .isBoolean()
-     .withMessage('Invalid value for Table Column')
-     .run(req);
+    await body('status')
+        .notEmpty()
+        .withMessage('Table Column is required')
+        .isBoolean()
+        .withMessage('Invalid value for Table Column')
+        .run(req);
 
     // Check for validation errors
     const errors = validationResult(req);
@@ -153,10 +189,10 @@ const editDataParameter = catchAsync(async (req, res, next) => {
     const updateData = {};
 
     if (parameter) updateData.parameter = parameter;
-    if (tableColumn) updateData.tableColumn = tableColumn;
+    if (table_column) updateData.table_column = table_column;
     if (status) updateData.status = status
 
-    const [updatedRowsCount, updatedRows] = await user.update(updateData, {
+    const [updatedRowsCount, updatedRows] = await dataParameter.update(updateData, {
         where: { id: req.params.id },
         returning: true, // Return the updated rows (needed for returning updated user data)
     });
@@ -185,7 +221,7 @@ const deleteDataParameter = catchAsync(async (req, res, next) => {
     if (!dataToDelete) {
         return res.status(404).json({
             status: 'Failed',
-            message: 'User not found',
+            message: 'Data Parameter not found',
         });
     }
 
