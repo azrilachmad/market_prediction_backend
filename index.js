@@ -22,7 +22,7 @@ const dataSourceRoute = require('./routes/dataSourceRoute.js')
 
 app.use(cors({
     credentials: true,
-    origin: false,
+    origin:'*'
 }));
 app.use(express.json());
 
