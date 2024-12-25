@@ -55,7 +55,7 @@ const createDataSource = catchAsync(async (req, res, next) => {
         .withMessage('Marketplace name is required')
         .custom(async (value) => {
             if (value) {
-                const marketplaceExist = await dataSource.findOne({ where: { parameter: value } });
+                const marketplaceExist = await dataSource.findOne({ where: { marketplace_name: value } });
                 if (marketplaceExist) {
                     throw new Error('Marketplace name already exists');
                 }
@@ -98,10 +98,10 @@ const createDataSource = catchAsync(async (req, res, next) => {
         });
     }
 
-    const { parameter, address, status } = req.body;
+    const { marketplace_name, address, status } = req.body;
 
     const newDataSource = await dataSource.create({
-        parameter,
+        marketplace_name,
         address,
         status,
     });
@@ -121,26 +121,26 @@ const createDataSource = catchAsync(async (req, res, next) => {
 
 
 const editDataSource = catchAsync(async (req, res, next) => {
-    // Find the user by ID from the route parameter
+    // Find the user by ID from the route marketplace_name
     const existingDataSource = await dataSource.findByPk(req.params.id);
     if (!existingDataSource) {
         return res.status(404).json({
             status: 'Failed',
-            message: 'Data Parameter not found',
+            message: 'Data Source not found',
         });
     }
 
     // Validation inside controller
-    await body('parameter')
+    await body('marketplace_name')
         .notEmpty()
-        .withMessage('Parameter is required')
+        .withMessage('Marketplace Name is required')
         .custom(async (value) => {
             if (value) {
                 const marketplaceExist = await dataSource.findOne({
-                    where: { parameter: value, id: { [Op.ne]: req.params.id } }
+                    where: { marketplace_name: value, id: { [Op.ne]: req.params.id } }
                 });
                 if (marketplaceExist) {
-                    throw new Error('Parameter name already exists');
+                    throw new Error('Marketplace Name already exists');
                 }
             }
         })
@@ -183,12 +183,12 @@ const editDataSource = catchAsync(async (req, res, next) => {
     }
 
     // Update the user with validated fields
-    const { parameter, address, status } = req.body;
+    const { marketplace_name, address, status } = req.body;
 
     // Use update method instead of save to ensure only existing users are updated
     const updateData = {};
 
-    if (parameter) updateData.parameter = parameter;
+    if (marketplace_name) updateData.marketplace_name = marketplace_name;
     if (address) updateData.address = address;
     if (status) updateData.status = status
 
@@ -200,7 +200,7 @@ const editDataSource = catchAsync(async (req, res, next) => {
     if (updatedRowsCount === 0) {
         return res.status(404).json({
             status: 'Failed',
-            message: 'Data Parameter not found',
+            message: 'Data Source not found',
         });
     }
 
@@ -216,12 +216,12 @@ const editDataSource = catchAsync(async (req, res, next) => {
 });
 
 const deleteDataSource = catchAsync(async (req, res, next) => {
-    // Find the user by ID from the route parameter
+    // Find the user by ID from the route marketplace_name
     const dataToDelete = await dataSource.findByPk(req.params.id);
     if (!dataToDelete) {
         return res.status(404).json({
             status: 'Failed',
-            message: 'Data Parameter not found',
+            message: 'Data Source not found',
         });
     }
 
@@ -230,7 +230,7 @@ const deleteDataSource = catchAsync(async (req, res, next) => {
 
     return res.status(200).json({
         status: 'Success',
-        message: 'Data Parameter deleted successfully',
+        message: 'Data Source deleted successfully',
     });
 });
 
