@@ -16,6 +16,7 @@ const authRoute = require('./routes/authRoute.js')
 const userRoute = require('./routes/userRoute.js')
 const dataParameterRoute = require('./routes/dataParameterRoute.js')
 const dataSourceRoute = require('./routes/dataSourceRoute.js')
+const jobScheduleRoute = require('./routes/jobScheduleRoute.js')
 
 
 
@@ -35,6 +36,7 @@ app.use(authRoute);
 app.use(userRoute);
 app.use(dataParameterRoute);
 app.use(dataSourceRoute);
+app.use(jobScheduleRoute);
 
 
 app.use('*', catchAsync(async (req, res, next) => {

@@ -68,7 +68,7 @@ const dataSource = sequelize.define('dataSource', {
 },
   {
     freezeTableName: true,
-    modelName: 'user',
+    modelName: 'dataSource',
     paranoid: true,
   });
 

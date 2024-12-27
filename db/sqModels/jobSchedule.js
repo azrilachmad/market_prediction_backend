@@ -11,46 +11,46 @@ const bcrypt = require('bcrypt');
 const AppError = require('../../utils/appError');
 
 
-const dataParameter = sequelize.define('dataParameter', {
+const jobSchedule = sequelize.define('jobSchedule', {
   id: {
     allowNull: false,
     autoIncrement: true,
     primaryKey: true,
     type: DataTypes.INTEGER
   },
-  parameter: {
+  job_schedule: {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
       notNull: {
-        msg: 'Parameter cannot be null'
+        msg: 'Job Schedule cannot be null'
       },
       notEmpty: {
-        msg: 'Parameter cannot be empty'
+        msg: 'Job Schedule cannot be empty'
       }
     }
   },
-  table_column: {
-    type: DataTypes.STRING,
+  time: {
+    type: DataTypes.TIME,
     allowNull: false,
     validate: {
       notNull: {
-        msg: 'Table Column cannot be null'
+        msg: 'Time cannot be null'
       },
       notEmpty: {
-        msg: 'Table Column cannot be empty'
+        msg: 'Time cannot be empty'
       }
     }
   },
-  status: {
+  max_record: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     validate: {
       notNull: {
-        msg: 'Email cannot be null'
+        msg: 'Max Record cannot be null'
       },
       notEmpty: {
-        msg: 'Email cannot be empty'
+        msg: 'Max Record cannot be empty'
       },
     }
   },
@@ -68,8 +68,8 @@ const dataParameter = sequelize.define('dataParameter', {
 },
   {
     freezeTableName: true,
-    modelName: 'dataParameter',
+    modelName: 'jobSchedule',
     paranoid: true,
   });
 
-module.exports = dataParameter
+module.exports = jobSchedule
