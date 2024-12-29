@@ -9,6 +9,9 @@ const catchAsync = require('./utils/catchAsync.js');
 const AppError = require('./utils/appError.js');
 const app = express();
 const globalErrorHandler = require('./controllers/errorController.js')
+const cron = require('node-cron');
+const jobSchedule = require('./db/sqModels/jobSchedule.js')
+const {convDate} = require('./helper/index.js')
 
 // Define every route
 const vehicleRoute = require('./routes/vehicleRoute.js')
@@ -38,6 +41,23 @@ app.use(dataParameterRoute);
 app.use(dataSourceRoute);
 app.use(jobScheduleRoute);
 
+
+(async () => {
+    try {
+        const jobScheduleData = await jobSchedule.findAll();
+        const parseData = jobScheduleData.map((item) => item.toJSON());
+
+        const hour =  convDate(parseData[0].time, 'hh') 
+        const minute = convDate(parseData[0].time, 'mm')
+        const second = convDate(parseData[0].time, 'ss')
+
+        cron.schedule(`${second} * * * * *`, async() => {
+            
+        });
+    } catch (error) {
+        console.error("Error occurred:", error);
+    }
+})();
 
 app.use('*', catchAsync(async (req, res, next) => {
     throw new AppError(`Can't find ${req.originalUrl} on this server`, 404)
