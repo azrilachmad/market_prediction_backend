@@ -11,7 +11,7 @@ const app = express();
 const globalErrorHandler = require('./controllers/errorController.js')
 const cron = require('node-cron');
 const jobSchedule = require('./db/sqModels/jobSchedule.js')
-const { convDate } = require('./helper/index.js')
+const { convDate, msToHHMMSS } = require('./helper/index.js')
 
 // Define every route
 const vehicleRoute = require('./routes/vehicleRoute.js')
@@ -69,7 +69,7 @@ app.use(jobScheduleRoute);
             const rawData = await Cars.findAndCountAll({
                 limit: parseData[0].max_record,
                 offset: 0,
-                order: [['updated_at', 'ASC']],
+                order: [['updated_at', 'DESC']],
                 where: {
                     harga_atas: null,
                     harga_bawah: null,
@@ -129,25 +129,36 @@ app.use(jobScheduleRoute);
                 try {
                     // Menggunakan await untuk memastikan prompting selesai sebelum melanjutkan ke iterasi berikutnya
                     const promptResult = await model.generateContent(prompt);
-                    console.log(promptResult.response.text());
+                    // console.log(promptResult.response.text());
                     totalToken += promptResult.response.usageMetadata.totalTokenCount * 1
                     console.log(promptResult.response.usageMetadata.totalTokenCount);
 
-                    const endTime = Date.now();
-                    const executionTime = endTime - startTime; msto
-
-                    // const { harga_terendah, harga_tertinggi } = response.data;
-
-                    // Update harga_atas dan harga_bawah pada tabel Cars
-                    // await Cars.update(
-                    //     { harga_atas: harga_tertinggi, harga_bawah: harga_terendah },
-                    //     { where: { id: data.id } }
-                    // );
+                    const resultData = JSON.parse(promptResult.response.text())
+                    console.log(resultData)
+                    if (!isNaN(resultData.harga_terendah * 1) && !isNaN(resultData.harga_tertinggi * 1)) {
+                        // Update harga_atas dan harga_bawah pada tabel Cars
+                        await Cars.update(
+                            {
+                                harga_atas: parseFloat(resultData.harga_terendah * 1),
+                                harga_bawah: parseFloat(resultData.harga_tertinggi * 1)
+                            },
+                            { where: { id: data.id } }
+                        );
+                    } else {
+                        console.warn(`Invalid price data for car ID ${data.id}:`);
+                    }
 
                 } catch (error) {
                     console.error(`Error fetching price for car ID ${data.id}:`, error);
                 }
+
+                const endTime = Date.now();
+                const executionTimeInMs = endTime - startTime;
+
+                const executionTime = msToHHMMSS(executionTimeInMs);
+
                 console.log('Total Token = ' + totalToken)
+                console.log(`Execution time: ${executionTime}`)
             }
         });
     } catch (error) {
