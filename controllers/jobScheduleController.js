@@ -35,7 +35,7 @@ const getAllJobSchedule = catchAsync(async (req, res, next) => {
     const jobScheduleData = await jobSchedule.findAndCountAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy, order]] })
 
     res.json({
-        data: jobScheduleData.rows,
+        data: jobScheduleData.rows[0],
         error: false,
         message: "OK - The request was successfull",
         meta: {

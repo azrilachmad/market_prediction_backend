@@ -54,113 +54,124 @@ app.use(jobScheduleRoute);
 
 (async () => {
     try {
-        const jobScheduleData = await jobSchedule.findAll();
-        const parseData = jobScheduleData.map((item) => item.toJSON());
+        let parseData
+        let hour
+        let minute
+        let second
+        cron.schedule(`00,10,20,30,40,50 * * * * *`, async () => {
+            let jobScheduleData = await jobSchedule.findAll();
+            parseData = jobScheduleData.map((item) => item.toJSON());
 
-        const hour = convDate(parseData[0].time, 'hh');
-        const minute = convDate(parseData[0].time, 'mm');
-        const second = convDate(parseData[0].time, 'ss');
+            hour = convDate(parseData[0].time, 'hh');
+            minute = convDate(parseData[0].time, 'mm');
+            second = convDate(parseData[0].time, 'ss');
+
+            console.log(hour)
+            console.log(minute)
+            console.log(second)
+        })
+
 
         // Inisiasi CRON berdasarkan waktu dari setting schedule Web UI
-        cron.schedule(`10,20,30,40,50 * * * * *`, async () => {
-            console.log('Cron job started');
-            const startTime = Date.now();
-            // Proses query data di DB berdasarkan max_record setting
-            const rawData = await Cars.findAndCountAll({
-                limit: parseData[0].max_record,
-                offset: 0,
-                order: [['updated_at', 'DESC']],
-                where: {
-                    harga_atas: null,
-                    harga_bawah: null,
-                }
-            });
+        // cron.schedule(`10,20,30,40,50 * * * * *`, async () => {
+        //     console.log('Cron job started');
+        //     const startTime = Date.now();
+        //     // Proses query data di DB berdasarkan max_record setting
+        //     const rawData = await Cars.findAndCountAll({
+        //         limit: parseData[0].max_record,
+        //         offset: 0,
+        //         order: [['updated_at', 'DESC']],
+        //         where: {
+        //             harga_atas: null,
+        //             harga_bawah: null,
+        //         }
+        //     });
 
-            // Store dataset ke array
-            let dataSet = [];
-            rawData.rows.map((item) => {
-                dataSet.push(item.dataValues);
-            });
-            // console.log(dataSet);
+        //     // Store dataset ke array
+        //     let dataSet = [];
+        //     rawData.rows.map((item) => {
+        //         dataSet.push(item.dataValues);
+        //     });
+        //     // console.log(dataSet);
 
-            // Mendapatkan dynamic prompt berdasarkan setting data parameter dari database
-            const dataParam = await dataParameter.findAndCountAll({
-                where: {
-                    status: true,
-                }
-            });
+        //     // Mendapatkan dynamic prompt berdasarkan setting data parameter dari database
+        //     const dataParam = await dataParameter.findAndCountAll({
+        //         where: {
+        //             status: true,
+        //         }
+        //     });
 
-            let parameterSet = {};
-            dataParam.rows.map((item) => {
-                parameterSet = {
-                    ...parameterSet,
-                    [item.dataValues.table_column]: item.dataValues.parameter,
-                };
-            });
-            // console.log(parameterSet);
+        //     let parameterSet = {};
+        //     dataParam.rows.map((item) => {
+        //         parameterSet = {
+        //             ...parameterSet,
+        //             [item.dataValues.table_column]: item.dataValues.parameter,
+        //         };
+        //     });
+        //     // console.log(parameterSet);
 
-            // Mendapatkan dynamic prompt berdasarkan setting data source dari database
-            const dataSourceData = await dataSource.findAndCountAll({
-                where: {
-                    status: true,
-                }
-            });
+        //     // Mendapatkan dynamic prompt berdasarkan setting data source dari database
+        //     const dataSourceData = await dataSource.findAndCountAll({
+        //         where: {
+        //             status: true,
+        //         }
+        //     });
 
-            let sourceSet = [];
-            dataSourceData.rows.map((item) => {
-                sourceSet.push(item.dataValues.address);
-            });
-            // console.log(sourceSet);
-            let totalToken = 0
-            // Proses Prompting AI (Price Check) berdasarkan dataSet
-            for (const data of dataSet) {
-                const parameterString = Object.entries(parameterSet)
-                    .map(([key, value]) => `${value}: ${data[key]}`)
-                    .join(", ");
+        //     let sourceSet = [];
+        //     dataSourceData.rows.map((item) => {
+        //         sourceSet.push(item.dataValues.address);
+        //     });
+        //     // console.log(sourceSet);
+        //     let totalToken = 0
+        //     // Proses Prompting AI (Price Check) berdasarkan dataSet
+        //     for (const data of dataSet) {
+        //         const parameterString = Object.entries(parameterSet)
+        //             .map(([key, value]) => `${value}: ${data[key]}`)
+        //             .join(", ");
 
-                const referenceLinks = sourceSet
-                    .map((link) => `- ${link}`)
-                    .join(", ");
+        //         const referenceLinks = sourceSet
+        //             .map((link) => `- ${link}`)
+        //             .join(", ");
 
-                const prompt = `Berikan Average Market Price untuk ${parameterString}. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
+        //         const prompt = `Berikan Average Market Price untuk ${parameterString}. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
 
-                console.log(prompt);
+        //         console.log(prompt);
 
-                try {
-                    // Menggunakan await untuk memastikan prompting selesai sebelum melanjutkan ke iterasi berikutnya
-                    const promptResult = await model.generateContent(prompt);
-                    // console.log(promptResult.response.text());
-                    totalToken += promptResult.response.usageMetadata.totalTokenCount * 1
-                    console.log(promptResult.response.usageMetadata.totalTokenCount);
+        //         try {
+        //             // Menggunakan await untuk memastikan prompting selesai sebelum melanjutkan ke iterasi berikutnya
+        //             const promptResult = await model.generateContent(prompt);
+        //             // console.log(promptResult.response.text());
+        //             totalToken += promptResult.response.usageMetadata.totalTokenCount * 1
+        //             console.log(promptResult.response.usageMetadata.totalTokenCount);
 
-                    const resultData = JSON.parse(promptResult.response.text())
-                    console.log(resultData)
-                    if (!isNaN(resultData.harga_terendah * 1) && !isNaN(resultData.harga_tertinggi * 1)) {
-                        // Update harga_atas dan harga_bawah pada tabel Cars
-                        await Cars.update(
-                            {
-                                harga_atas: parseFloat(resultData.harga_terendah * 1),
-                                harga_bawah: parseFloat(resultData.harga_tertinggi * 1)
-                            },
-                            { where: { id: data.id } }
-                        );
-                    } else {
-                        console.warn(`Invalid price data for car ID ${data.id}:`);
-                    }
+        //             const resultData = JSON.parse(promptResult.response.text())
+        //             console.log(resultData)
+        //             if (!isNaN(resultData.harga_terendah * 1) && !isNaN(resultData.harga_tertinggi * 1)) {
+        //                 // Update harga_atas dan harga_bawah pada tabel Cars
+        //                 await Cars.update(
+        //                     {
+        //                         harga_atas: parseFloat(resultData.harga_terendah * 1),
+        //                         harga_bawah: parseFloat(resultData.harga_tertinggi * 1)
+        //                     },
+        //                     { where: { id: data.id } }
+        //                 );
+        //             } else {
+        //                 console.warn(`Invalid price data for car ID ${data.id}:`);
+        //             }
 
-                } catch (error) {
-                    console.error(`Error fetching price for car ID ${data.id}:`, error);
-                }
+        //         } catch (error) {
+        //             console.error(`Error fetching price for car ID ${data.id}:`, error);
+        //         }
 
-                const endTime = Date.now();
-                const executionTimeInMs = endTime - startTime;
+        //         const endTime = Date.now();
+        //         const executionTimeInMs = endTime - startTime;
 
-                const executionTime = msToHHMMSS(executionTimeInMs);
+        //         const executionTime = msToHHMMSS(executionTimeInMs);
 
-                console.log('Total Token = ' + totalToken)
-                console.log(`Execution time: ${executionTime}`)
-            }
-        });
+        //         console.log('Total Token = ' + totalToken)
+        //         console.log(`Execution time: ${executionTime}`)
+        //     }
+        // });
     } catch (error) {
         console.error("Error occurred:", error);
     }
