@@ -11,11 +11,13 @@ const app = express();
 const globalErrorHandler = require('./controllers/errorController.js')
 const cron = require('node-cron');
 const jobSchedule = require('./db/sqModels/jobSchedule.js')
-const { convDate, msToHHMMSS } = require('./helper/index.js')
+const scheduleLog = require('./db/sqModels/scheduleLog.js')
+const { convDate, msToHHMMSS, setUTC7 } = require('./helper/index.js')
 const Cars = require('./model/vehicleModel.js');
 const dataParameter = require('./db/sqModels/dataParameter.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const dataSource = require('./db/sqModels/dataSource.js');
+const { Op } = require('sequelize');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
@@ -54,132 +56,145 @@ app.use(jobScheduleRoute);
 app.use(dashboardRoute);
 
 
+
 (async () => {
     try {
-        let parseData
-        let hour
-        let minute
-        let second
-        // cron.schedule(`00,10,20,30,40,50 * * * * *`, async () => {
-        cron.schedule(`00,10,20,30,40,50 * * * * *`, async () => {
-            let jobScheduleData = await jobSchedule.findAll();
+        let parseData = [];
+        let currentCronJob = null;
+
+        // Fetch the schedule data from the database
+        async function fetchJobSchedule() {
+            const jobScheduleData = await jobSchedule.findAll();
             parseData = jobScheduleData.map((item) => item.toJSON());
+            return {
+                hour: convDate(parseData[0].time, 'hh'),
+                minute: convDate(parseData[0].time, 'mm'),
+                second: convDate(parseData[0].time, 'ss'),
+                parseData,
+            };
+        }
 
-            hour = convDate(parseData[0].time, 'hh');
-            minute = convDate(parseData[0].time, 'mm');
-            second = convDate(parseData[0].time, 'ss');
+        // Schedule the price check job
+        function schedulePriceCheck({ hour, minute, second, parseData }) {
+            // Stop the existing job if it exists
+            if (currentCronJob) {
+                currentCronJob.stop();
+                console.log('Previous cron job stopped.');
+            }
 
-            console.log(hour)
-            console.log(minute)
-            console.log(second)
-        }, {
-            timezone: 'Asia/Jakarta'
-        })
-
-
-        // Inisiasi CRON berdasarkan waktu dari setting schedule Web UI
-        // cron.schedule(`10,20,30,40,50 * * * * *`, async () => {
-        cron.schedule(`49 * * * *`, async () => {
-            console.log('Cron job started');
-            const startTime = Date.now();
-            // Proses query data di DB berdasarkan max_record setting
-            const rawData = await Cars.findAndCountAll({
-                limit: parseData[0].max_record,
-                offset: 0,
-                order: [['updated_at', 'DESC']],
-                where: {
-                    harga_atas: null,
-                    harga_bawah: null,
-                }
-            });
-
-            // Store dataset ke array
-            let dataSet = [];
-            rawData.rows.map((item) => {
-                dataSet.push(item.dataValues);
-            });
-            // console.log(dataSet);
-
-            // Mendapatkan dynamic prompt berdasarkan setting data parameter dari database
-            const dataParam = await dataParameter.findAndCountAll({
-                where: {
-                    status: true,
-                }
-            });
-
-            let parameterSet = {};
-            dataParam.rows.map((item) => {
-                parameterSet = {
-                    ...parameterSet,
-                    [item.dataValues.table_column]: item.dataValues.parameter,
-                };
-            });
-            // console.log(parameterSet);
-
-            // Mendapatkan dynamic prompt berdasarkan setting data source dari database
-            const dataSourceData = await dataSource.findAndCountAll({
-                where: {
-                    status: true,
-                }
-            });
-
-            let sourceSet = [];
-            dataSourceData.rows.map((item) => {
-                sourceSet.push(item.dataValues.address);
-            });
-            // console.log(sourceSet);
-            let totalToken = 0
-            // Proses Prompting AI (Price Check) berdasarkan dataSet
-            for (const data of dataSet) {
-                const parameterString = Object.entries(parameterSet)
-                    .map(([key, value]) => `${value}: ${data[key]}`)
-                    .join(", ");
-
-                const referenceLinks = sourceSet
-                    .map((link) => `- ${link}`)
-                    .join(", ");
-
-                const prompt = `Berikan Average Market Price untuk ${parameterString}. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
-
-                console.log(prompt);
+            // Create a new cron job
+            const cronTime = `${second} * * * * *`; // Dynamic schedule
+            currentCronJob = cron.schedule(cronTime, async () => {
+                console.log('Price check cron job running...');
 
                 try {
-                    // Menggunakan await untuk memastikan prompting selesai sebelum melanjutkan ke iterasi berikutnya
-                    const promptResult = await model.generateContent(prompt);
-                    // console.log(promptResult.response.text());
-                    totalToken += promptResult.response.usageMetadata.totalTokenCount * 1
-                    console.log(promptResult.response.usageMetadata.totalTokenCount);
+                    const startTime = Date.now();
 
-                    const resultData = JSON.parse(promptResult.response.text())
-                    console.log(resultData)
-                    if (!isNaN(resultData.harga_terendah * 1) && !isNaN(resultData.harga_tertinggi * 1)) {
-                        // Update harga_atas dan harga_bawah pada tabel Cars
-                        await Cars.update(
-                            {
-                                harga_atas: parseFloat(resultData.harga_terendah * 1),
-                                harga_bawah: parseFloat(resultData.harga_tertinggi * 1)
-                            },
-                            { where: { id: data.id } }
-                        );
-                    } else {
-                        console.warn(`Invalid price data for car ID ${data.id}:`);
+                    // --- Begin price-check logic ---
+                    const rawData = await Cars.findAndCountAll({
+                        limit: parseData[0].max_record,
+                        offset: 0,
+                        order: [['updated_at', 'ASC']],
+                        where: {
+                            [Op.or]: [
+                                { checked: false },
+                                { checked: null },
+                            ],
+                        },
+                    });
+
+                    let dataSet = rawData.rows.map((item) => item.dataValues);
+
+                    // Dynamic parameters
+                    const dataParam = await dataParameter.findAndCountAll({ where: { status: true } });
+                    let parameterSet = {};
+                    dataParam.rows.map((item) => {
+                        parameterSet = { ...parameterSet, [item.dataValues.table_column]: item.dataValues.parameter };
+                    });
+
+                    const dataSourceData = await dataSource.findAndCountAll({ where: { status: true } });
+                    let sourceSet = dataSourceData.rows.map((item) => item.dataValues.address);
+
+                    let totalToken = 0;
+
+                    for (const data of dataSet) {
+                        const parameterString = Object.entries(parameterSet)
+                            .map(([key, value]) => `${value}: ${data[key]}`)
+                            .join(", ");
+                        const referenceLinks = sourceSet.map((link) => `- ${link}`).join(", ");
+
+                        const prompt = `Berikan Average Market Price untuk ${parameterString} berikut juga bisa menjadi referensi sumber: ${referenceLinks} \n. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
+
+                        const promptResult = await model.generateContent(prompt);
+                        totalToken += promptResult.response.usageMetadata.totalTokenCount * 1;
+
+                        const resultData = JSON.parse(promptResult.response.text());
+                        if (!isNaN(resultData.harga_terendah) && !isNaN(resultData.harga_tertinggi)) {
+                            await Cars.update(
+                                {
+                                    harga_atas: isNaN(resultData.harga_terendah) ? 0 : parseFloat(resultData.harga_terendah),
+                                    harga_bawah: isNaN(resultData.harga_tertinggi) ? 0 : parseFloat(resultData.harga_tertinggi),
+                                    checked: true,
+                                },
+                                { where: { id: data.id } }
+                            );
+                        } else {
+                            await Cars.update(
+                                {
+                                    harga_atas: 0,
+                                    harga_bawah: 0,
+                                    checked: true,
+                                },
+                                { where: { id: data.id } }
+                            );
+                        }
                     }
 
+                    const endTime = Date.now();
+                    const executionTimeInMs = endTime - startTime;
+                    const executionTime = msToHHMMSS(executionTimeInMs);
+                    const timeSplit = executionTime.split(':');
+                    const seconds = (+timeSplit[0]) * 60 * 60 + (+timeSplit[1]) * 60 + (+timeSplit[2]);
+
+                    await scheduleLog.sync({ alter: true });
+                    await scheduleLog.create({
+                        date: setUTC7(parseData[0].time),
+                        total_data: dataSet.length,
+                        total_token: totalToken,
+                        average_token: totalToken / dataSet.length,
+                        duration: seconds,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    });
                 } catch (error) {
-                    console.error(`Error fetching price for car ID ${data.id}:`, error);
+                    console.error('Error in price check job:', error);
                 }
+            }, {
+                timezone: 'Asia/Jakarta',
+            });
 
-                const endTime = Date.now();
-                const executionTimeInMs = endTime - startTime;
+            console.log(`New cron job scheduled at: ${cronTime}`);
+        }
 
-                const executionTime = msToHHMMSS(executionTimeInMs);
+        // Initial schedule setup
+        const scheduleData = await fetchJobSchedule();
+        schedulePriceCheck(scheduleData);
 
-                console.log('Total Token = ' + totalToken)
-                console.log(`Execution time: ${executionTime}`)
+        // Periodically check for schedule updates (every minute)
+        setInterval(async () => {
+            const updatedScheduleData = await fetchJobSchedule();
+
+            const hasScheduleChanged =
+                updatedScheduleData.hour !== scheduleData.hour ||
+                updatedScheduleData.minute !== scheduleData.minute ||
+                updatedScheduleData.second !== scheduleData.second;
+
+            if (hasScheduleChanged) {
+                console.log('Schedule updated in database, rescheduling the cron job...');
+                schedulePriceCheck(updatedScheduleData);
             }
-        }, {
-            timezone: 'Asia/Jakarta'
-        });
+        }, 60000); // Check every 60 seconds
+
     } catch (error) {
         console.error("Error occurred:", error);
     }

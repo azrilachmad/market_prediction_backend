@@ -80,6 +80,10 @@ const Cars = db.define('Cars', {
         type: DataTypes.STRING,
         allowNull:true,
     },
+    checked: {
+        type: DataTypes.BOOLEAN,
+        allowNull:true,
+    },
 
 
 
