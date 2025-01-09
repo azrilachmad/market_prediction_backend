@@ -12,14 +12,6 @@ const globalErrorHandler = require('./controllers/errorController.js')
 const cron = require('node-cron');
 const jobSchedule = require('./db/sqModels/jobSchedule.js')
 const { convDate, msToHHMMSS } = require('./helper/index.js')
-
-// Define every route
-const vehicleRoute = require('./routes/vehicleRoute.js')
-const authRoute = require('./routes/authRoute.js')
-const userRoute = require('./routes/userRoute.js')
-const dataParameterRoute = require('./routes/dataParameterRoute.js')
-const dataSourceRoute = require('./routes/dataSourceRoute.js')
-const jobScheduleRoute = require('./routes/jobScheduleRoute.js');
 const Cars = require('./model/vehicleModel.js');
 const dataParameter = require('./db/sqModels/dataParameter.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -31,6 +23,15 @@ const model = genAI.getGenerativeModel({
     generationConfig: { "response_mime_type": "application/json" },
 });
 
+
+// Define every route
+const vehicleRoute = require('./routes/vehicleRoute.js')
+const authRoute = require('./routes/authRoute.js')
+const userRoute = require('./routes/userRoute.js')
+const dataParameterRoute = require('./routes/dataParameterRoute.js')
+const dataSourceRoute = require('./routes/dataSourceRoute.js')
+const jobScheduleRoute = require('./routes/jobScheduleRoute.js');
+const dashboardRoute = require('./routes/dashboardRoute.js');
 
 
 
@@ -50,6 +51,7 @@ app.use(userRoute);
 app.use(dataParameterRoute);
 app.use(dataSourceRoute);
 app.use(jobScheduleRoute);
+app.use(dashboardRoute);
 
 
 (async () => {
@@ -58,6 +60,7 @@ app.use(jobScheduleRoute);
         let hour
         let minute
         let second
+        // cron.schedule(`00,10,20,30,40,50 * * * * *`, async () => {
         cron.schedule(`00,10,20,30,40,50 * * * * *`, async () => {
             let jobScheduleData = await jobSchedule.findAll();
             parseData = jobScheduleData.map((item) => item.toJSON());
@@ -69,109 +72,114 @@ app.use(jobScheduleRoute);
             console.log(hour)
             console.log(minute)
             console.log(second)
+        }, {
+            timezone: 'Asia/Jakarta'
         })
 
 
         // Inisiasi CRON berdasarkan waktu dari setting schedule Web UI
         // cron.schedule(`10,20,30,40,50 * * * * *`, async () => {
-        //     console.log('Cron job started');
-        //     const startTime = Date.now();
-        //     // Proses query data di DB berdasarkan max_record setting
-        //     const rawData = await Cars.findAndCountAll({
-        //         limit: parseData[0].max_record,
-        //         offset: 0,
-        //         order: [['updated_at', 'DESC']],
-        //         where: {
-        //             harga_atas: null,
-        //             harga_bawah: null,
-        //         }
-        //     });
+        cron.schedule(`49 * * * *`, async () => {
+            console.log('Cron job started');
+            const startTime = Date.now();
+            // Proses query data di DB berdasarkan max_record setting
+            const rawData = await Cars.findAndCountAll({
+                limit: parseData[0].max_record,
+                offset: 0,
+                order: [['updated_at', 'DESC']],
+                where: {
+                    harga_atas: null,
+                    harga_bawah: null,
+                }
+            });
 
-        //     // Store dataset ke array
-        //     let dataSet = [];
-        //     rawData.rows.map((item) => {
-        //         dataSet.push(item.dataValues);
-        //     });
-        //     // console.log(dataSet);
+            // Store dataset ke array
+            let dataSet = [];
+            rawData.rows.map((item) => {
+                dataSet.push(item.dataValues);
+            });
+            // console.log(dataSet);
 
-        //     // Mendapatkan dynamic prompt berdasarkan setting data parameter dari database
-        //     const dataParam = await dataParameter.findAndCountAll({
-        //         where: {
-        //             status: true,
-        //         }
-        //     });
+            // Mendapatkan dynamic prompt berdasarkan setting data parameter dari database
+            const dataParam = await dataParameter.findAndCountAll({
+                where: {
+                    status: true,
+                }
+            });
 
-        //     let parameterSet = {};
-        //     dataParam.rows.map((item) => {
-        //         parameterSet = {
-        //             ...parameterSet,
-        //             [item.dataValues.table_column]: item.dataValues.parameter,
-        //         };
-        //     });
-        //     // console.log(parameterSet);
+            let parameterSet = {};
+            dataParam.rows.map((item) => {
+                parameterSet = {
+                    ...parameterSet,
+                    [item.dataValues.table_column]: item.dataValues.parameter,
+                };
+            });
+            // console.log(parameterSet);
 
-        //     // Mendapatkan dynamic prompt berdasarkan setting data source dari database
-        //     const dataSourceData = await dataSource.findAndCountAll({
-        //         where: {
-        //             status: true,
-        //         }
-        //     });
+            // Mendapatkan dynamic prompt berdasarkan setting data source dari database
+            const dataSourceData = await dataSource.findAndCountAll({
+                where: {
+                    status: true,
+                }
+            });
 
-        //     let sourceSet = [];
-        //     dataSourceData.rows.map((item) => {
-        //         sourceSet.push(item.dataValues.address);
-        //     });
-        //     // console.log(sourceSet);
-        //     let totalToken = 0
-        //     // Proses Prompting AI (Price Check) berdasarkan dataSet
-        //     for (const data of dataSet) {
-        //         const parameterString = Object.entries(parameterSet)
-        //             .map(([key, value]) => `${value}: ${data[key]}`)
-        //             .join(", ");
+            let sourceSet = [];
+            dataSourceData.rows.map((item) => {
+                sourceSet.push(item.dataValues.address);
+            });
+            // console.log(sourceSet);
+            let totalToken = 0
+            // Proses Prompting AI (Price Check) berdasarkan dataSet
+            for (const data of dataSet) {
+                const parameterString = Object.entries(parameterSet)
+                    .map(([key, value]) => `${value}: ${data[key]}`)
+                    .join(", ");
 
-        //         const referenceLinks = sourceSet
-        //             .map((link) => `- ${link}`)
-        //             .join(", ");
+                const referenceLinks = sourceSet
+                    .map((link) => `- ${link}`)
+                    .join(", ");
 
-        //         const prompt = `Berikan Average Market Price untuk ${parameterString}. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
+                const prompt = `Berikan Average Market Price untuk ${parameterString}. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
 
-        //         console.log(prompt);
+                console.log(prompt);
 
-        //         try {
-        //             // Menggunakan await untuk memastikan prompting selesai sebelum melanjutkan ke iterasi berikutnya
-        //             const promptResult = await model.generateContent(prompt);
-        //             // console.log(promptResult.response.text());
-        //             totalToken += promptResult.response.usageMetadata.totalTokenCount * 1
-        //             console.log(promptResult.response.usageMetadata.totalTokenCount);
+                try {
+                    // Menggunakan await untuk memastikan prompting selesai sebelum melanjutkan ke iterasi berikutnya
+                    const promptResult = await model.generateContent(prompt);
+                    // console.log(promptResult.response.text());
+                    totalToken += promptResult.response.usageMetadata.totalTokenCount * 1
+                    console.log(promptResult.response.usageMetadata.totalTokenCount);
 
-        //             const resultData = JSON.parse(promptResult.response.text())
-        //             console.log(resultData)
-        //             if (!isNaN(resultData.harga_terendah * 1) && !isNaN(resultData.harga_tertinggi * 1)) {
-        //                 // Update harga_atas dan harga_bawah pada tabel Cars
-        //                 await Cars.update(
-        //                     {
-        //                         harga_atas: parseFloat(resultData.harga_terendah * 1),
-        //                         harga_bawah: parseFloat(resultData.harga_tertinggi * 1)
-        //                     },
-        //                     { where: { id: data.id } }
-        //                 );
-        //             } else {
-        //                 console.warn(`Invalid price data for car ID ${data.id}:`);
-        //             }
+                    const resultData = JSON.parse(promptResult.response.text())
+                    console.log(resultData)
+                    if (!isNaN(resultData.harga_terendah * 1) && !isNaN(resultData.harga_tertinggi * 1)) {
+                        // Update harga_atas dan harga_bawah pada tabel Cars
+                        await Cars.update(
+                            {
+                                harga_atas: parseFloat(resultData.harga_terendah * 1),
+                                harga_bawah: parseFloat(resultData.harga_tertinggi * 1)
+                            },
+                            { where: { id: data.id } }
+                        );
+                    } else {
+                        console.warn(`Invalid price data for car ID ${data.id}:`);
+                    }
 
-        //         } catch (error) {
-        //             console.error(`Error fetching price for car ID ${data.id}:`, error);
-        //         }
+                } catch (error) {
+                    console.error(`Error fetching price for car ID ${data.id}:`, error);
+                }
 
-        //         const endTime = Date.now();
-        //         const executionTimeInMs = endTime - startTime;
+                const endTime = Date.now();
+                const executionTimeInMs = endTime - startTime;
 
-        //         const executionTime = msToHHMMSS(executionTimeInMs);
+                const executionTime = msToHHMMSS(executionTimeInMs);
 
-        //         console.log('Total Token = ' + totalToken)
-        //         console.log(`Execution time: ${executionTime}`)
-        //     }
-        // });
+                console.log('Total Token = ' + totalToken)
+                console.log(`Execution time: ${executionTime}`)
+            }
+        }, {
+            timezone: 'Asia/Jakarta'
+        });
     } catch (error) {
         console.error("Error occurred:", error);
     }
