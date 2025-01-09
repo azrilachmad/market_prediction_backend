@@ -83,7 +83,8 @@ app.use(dashboardRoute);
             }
 
             // Create a new cron job
-            const cronTime = `${second} * * * * *`; // Dynamic schedule
+            // const cronTime = `10 * * * * *`; // Dynamic schedule
+            const cronTime = `${minute} ${hour} * * *`; // Dynamic schedule
             currentCronJob = cron.schedule(cronTime, async () => {
                 console.log('Price check cron job running...');
 
@@ -117,55 +118,57 @@ app.use(dashboardRoute);
 
                     let totalToken = 0;
 
-                    for (const data of dataSet) {
-                        const parameterString = Object.entries(parameterSet)
-                            .map(([key, value]) => `${value}: ${data[key]}`)
-                            .join(", ");
-                        const referenceLinks = sourceSet.map((link) => `- ${link}`).join(", ");
+                    if (dataSet.length > 0) {
+                        for (const data of dataSet) {
+                            const parameterString = Object.entries(parameterSet)
+                                .map(([key, value]) => `${value}: ${data[key]}`)
+                                .join(", ");
+                            const referenceLinks = sourceSet.map((link) => `- ${link}`).join(", ");
 
-                        const prompt = `Berikan Average Market Price untuk ${parameterString} berikut juga bisa menjadi referensi sumber: ${referenceLinks} \n. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
+                            const prompt = `Berikan Average Market Price untuk ${parameterString} berikut juga bisa menjadi referensi sumber: ${referenceLinks} \n. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
 
-                        const promptResult = await model.generateContent(prompt);
-                        totalToken += promptResult.response.usageMetadata.totalTokenCount * 1;
+                            const promptResult = await model.generateContent(prompt);
+                            totalToken += promptResult.response.usageMetadata.totalTokenCount * 1;
 
-                        const resultData = JSON.parse(promptResult.response.text());
-                        if (!isNaN(resultData.harga_terendah) && !isNaN(resultData.harga_tertinggi)) {
-                            await Cars.update(
-                                {
-                                    harga_atas: isNaN(resultData.harga_terendah) ? 0 : parseFloat(resultData.harga_terendah),
-                                    harga_bawah: isNaN(resultData.harga_tertinggi) ? 0 : parseFloat(resultData.harga_tertinggi),
-                                    checked: true,
-                                },
-                                { where: { id: data.id } }
-                            );
-                        } else {
-                            await Cars.update(
-                                {
-                                    harga_atas: 0,
-                                    harga_bawah: 0,
-                                    checked: true,
-                                },
-                                { where: { id: data.id } }
-                            );
+                            const resultData = JSON.parse(promptResult.response.text());
+                            if (!isNaN(resultData.harga_terendah) && !isNaN(resultData.harga_tertinggi)) {
+                                await Cars.update(
+                                    {
+                                        harga_atas: isNaN(resultData.harga_terendah) ? 0 : parseFloat(resultData.harga_terendah),
+                                        harga_bawah: isNaN(resultData.harga_tertinggi) ? 0 : parseFloat(resultData.harga_tertinggi),
+                                        checked: true,
+                                    },
+                                    { where: { id: data.id } }
+                                );
+                            } else {
+                                await Cars.update(
+                                    {
+                                        harga_atas: 0,
+                                        harga_bawah: 0,
+                                        checked: true,
+                                    },
+                                    { where: { id: data.id } }
+                                );
+                            }
                         }
+                        const endTime = Date.now();
+                        const executionTimeInMs = endTime - startTime;
+                        const executionTime = msToHHMMSS(executionTimeInMs);
+                        const timeSplit = executionTime.split(':');
+                        const seconds = (+timeSplit[0]) * 60 * 60 + (+timeSplit[1]) * 60 + (+timeSplit[2]);
+
+                        await scheduleLog.sync({ alter: true });
+                        await scheduleLog.create({
+                            date: setUTC7(parseData[0].time),
+                            total_data: dataSet.length,
+                            total_token: totalToken,
+                            average_token: totalToken / dataSet.length,
+                            duration: seconds,
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                        });
                     }
 
-                    const endTime = Date.now();
-                    const executionTimeInMs = endTime - startTime;
-                    const executionTime = msToHHMMSS(executionTimeInMs);
-                    const timeSplit = executionTime.split(':');
-                    const seconds = (+timeSplit[0]) * 60 * 60 + (+timeSplit[1]) * 60 + (+timeSplit[2]);
-
-                    await scheduleLog.sync({ alter: true });
-                    await scheduleLog.create({
-                        date: setUTC7(parseData[0].time),
-                        total_data: dataSet.length,
-                        total_token: totalToken,
-                        average_token: totalToken / dataSet.length,
-                        duration: seconds,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    });
                 } catch (error) {
                     console.error('Error in price check job:', error);
                 }
