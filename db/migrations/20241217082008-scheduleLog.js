@@ -13,6 +13,10 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
       },
+      type: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       total_data: {
         type: Sequelize.INTEGER,
         allowNull: false,

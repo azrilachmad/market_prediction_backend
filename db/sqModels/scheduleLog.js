@@ -30,6 +30,18 @@ const scheduleLog = sequelize.define('scheduleLog', {
       }
     }
   },
+  type: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notNull: {
+        msg: 'Log Type cannot be null'
+      },
+      notEmpty: {
+        msg: 'Log Type cannot be empty'
+      }
+    }
+  },
   total_data: {
     type: DataTypes.INTEGER,
     allowNull: false,

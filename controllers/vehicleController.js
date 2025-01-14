@@ -5,24 +5,19 @@ const { DataTypes, Op, Sequelize } = require("sequelize");
 const Cars = require("../model/vehicleModel.js");
 const CarsType = require("../model/vehicleType.js");
 const sequelize = require("../config/db.js");
-const { convDate } = require("../helper/index.js");
+const { convDate, setUTC7 } = require("../helper/index.js");
 const catchAsync = require('../utils/catchAsync.js');
+const { link } = require('fs');
+const dataSource = require('../db/sqModels/dataSource.js');
+const scheduleLog = require('../db/sqModels/scheduleLog.js');
 
 const fs = ('fs');
 const { ChartJSNodeCanvas } = ("chartjs-node-canvas");
 
-const gemini_api_key = process.env.GEMINI_API_KEY;
-const googleAI = new GoogleGenerativeAI(gemini_api_key);
-const geminiConfig = {
-    temperature: 1,
-    topP: 1,
-    topK: 1,
-    maxOutputTokens: 4096,
-};
-
-const geminiModel = googleAI.getGenerativeModel({
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({
     model: "gemini-1.5-flash",
-    geminiConfig,
+    generationConfig: { "response_mime_type": "application/json" },
 });
 
 const createSinglePredict = catchAsync(async (req, res) => {
@@ -38,18 +33,25 @@ const createSinglePredict = catchAsync(async (req, res) => {
     } = req.body
 
     try {
-        const vehicleCorrectionPrompt = `Koreksi nama unit ini dengan nama yang benar dan singkat, anda bisa cari di internet. berikan response langsung nama nya tanpa perlu Nama unit yang benar adalah : ${req.body.nama_kendaraan}. tidak boleh ada \n.`;
-        const correctionResult = await geminiModel.generateContent(vehicleCorrectionPrompt);
-        const correctionResponse = correctionResult.response;
+        const dataSourceData = await dataSource.findAndCountAll({ where: { status: true } });
+        let sourceSet = dataSourceData.rows.map((item) => item.dataValues.address);
+        const referenceLinks = sourceSet.map((link) => `- ${link}`).join(", ");
 
-        const marketPredictionPrompt = `Berikan Average Market Price untuk ${jenis_kendaraan} Bekas ${nama_kendaraan}, Tahun kendaraan ${tahun_kendaraan} jarak tempuh kendaraan ${jarak_tempuh_kendaraan} km, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar}, wilayah kendaraan ${wilayah_kendaraan} dan tanggal iklan dibuat paling terbaru dengan format json sebagai berikut:
-        {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi, "link_sumber_analisa: [link1 (https://www.facebook.com/marketplace/bandung/search/?query=xxxxxx), link2 (https://www.facebook.com/marketplace/bandung/search/?query=xxxxx), link3 (https://www.facebook.com/marketplace/bandung/search/?query=xxxxx), link4 (https://www.facebook.com/marketplace/bandung/search/?query=xxxxx))], "tanggal_posting": Tanggal dibuat iklan terbaru}. buat tanpa catatan, tidak boleh ada \n tidak boleh juga ada backslash tidak boleh ada tulisan json, hanya hasil sesuai format`
-        const predictionResult = await geminiModel.generateContent(marketPredictionPrompt)
-        const predictionResponse = await predictionResult.response
+
+        let totalToken = 0;
+
+        const marketPredictionPrompt = `Berikan Average Market Price untuk ${jenis_kendaraan} Bekas ${nama_kendaraan}, Tahun kendaraan ${tahun_kendaraan} jarak tempuh kendaraan ${jarak_tempuh_kendaraan} km, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar}, wilayah kendaraan ${wilayah_kendaraan}. berikut juga bisa menjadi referensi sumber: ${referenceLinks} \n. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
+        const promptResult = await model.generateContent(marketPredictionPrompt);
+        totalToken += promptResult.response.usageMetadata.totalTokenCount * 1;
+
+        const resultData = JSON.parse(promptResult.response.text());
         const responseData = {
-            "data": {
-                "nama_kendaraan": correctionResponse.text().replace('\n', ''),
-                "market_prediction": JSON.parse(predictionResponse.text())
+            data: {
+                nama_kendaraan: nama_kendaraan,
+                harga_terendah: resultData.harga_terendah,
+                harga_tertinggi: resultData.harga_tertinggi,
+                link_referensi: sourceSet,
+                total_token: totalToken
             },
             error: false,
             status_code: 200,
@@ -129,6 +131,7 @@ const getVehicleList = catchAsync(async (req, res) => {
     const pageAsNumber = parseInt(req.query.page) || 1;
     const limitAsNumber = parseInt(req.query.limit) || 10;
     const order = req.query.order;
+    const sortBy = req.query.sortBy;
 
     let page = 0;
     if (!Number.isNaN(pageAsNumber) && pageAsNumber > 0) {
@@ -142,7 +145,7 @@ const getVehicleList = catchAsync(async (req, res) => {
 
 
     try {
-        const vehicles = await Cars.findAndCountAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [['updated_at', 'ASC']] })
+        const vehicles = await Cars.findAndCountAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy ? sortBy : 'checked', order]], })
         res.json({
             data: vehicles.rows,
             error: false,
@@ -223,14 +226,20 @@ const getChart = catchAsync(async (req, res) => {
 })
 
 const updateVehicleData = catchAsync(async (req, res) => {
-    const { vehicles } = req.body;
     try {
 
-        const promise = vehicles.map((vehicle) => {
-            const { id, desciption, harga_bawah, harga_atas } = vehicle;
-            Vehicle.update({ desciption, harga_bawah, harga_atas, nama_mobil: desciption, updated_at: Date.now() }, { where: { id } });
-        })
-        await Promise.all(promise)
+        const { id, harga_bawah, harga_atas, total_token } = req.body;
+        await Vehicle.update({ harga_bawah, harga_atas, checked: true, updated_at: Date.now() }, { where: { id } });
+        await scheduleLog.create({
+            type: "Manual",
+            date: setUTC7(new Date()),
+            total_data: 1,
+            total_token: total_token,
+            average_token: total_token / 1,
+            duration: 2,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
         res.json({
             error: false,
             message: "OK - The request was successfull",
