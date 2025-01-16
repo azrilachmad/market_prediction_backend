@@ -145,7 +145,7 @@ const getVehicleList = catchAsync(async (req, res) => {
 
 
     try {
-        const vehicles = await Cars.findAndCountAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy ? sortBy : 'checked', order]], })
+        const vehicles = await Cars.findAndCountAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy ? sortBy : 'hit_count', order]], })
         res.json({
             data: vehicles.rows,
             error: false,
@@ -229,7 +229,7 @@ const updateVehicleData = catchAsync(async (req, res) => {
     try {
 
         const { id, harga_bawah, harga_atas, total_token } = req.body;
-        await Vehicle.update({ harga_bawah, harga_atas, checked: true, updated_at: Date.now() }, { where: { id } });
+        await Vehicle.update({ harga_bawah, harga_atas, hit_count: Sequelize.literal('hit_count + 1'), updated_at: Date.now() }, { where: { id } });
         await scheduleLog.create({
             type: "Manual",
             date: setUTC7(new Date()),

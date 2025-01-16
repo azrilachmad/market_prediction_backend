@@ -80,8 +80,8 @@ const Cars = db.define('Cars', {
         type: DataTypes.STRING,
         allowNull:true,
     },
-    checked: {
-        type: DataTypes.BOOLEAN,
+    hit_count: {
+        type: DataTypes.INTEGER,
         allowNull:true,
     },
 

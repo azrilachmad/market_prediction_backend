@@ -17,7 +17,7 @@ const Cars = require('./model/vehicleModel.js');
 const dataParameter = require('./db/sqModels/dataParameter.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const dataSource = require('./db/sqModels/dataSource.js');
-const { Op } = require('sequelize');
+const { Op, Sequelize } = require('sequelize');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
@@ -83,8 +83,8 @@ app.use(dashboardRoute);
             }
 
             // Create a new cron job
-            // const cronTime = `10 * * * * *`; // Dynamic schedule
-            const cronTime = `${minute} ${hour} * * *`; // Dynamic schedule
+            const cronTime = `56 * * * *`; // Dynamic schedule
+            // const cronTime = `${minute} ${hour} * * *`; // Dynamic schedule
             currentCronJob = cron.schedule(cronTime, async () => {
                 console.log('Price check cron job running...');
 
@@ -97,9 +97,16 @@ app.use(dashboardRoute);
                         offset: 0,
                         order: [['updated_at', 'ASC']],
                         where: {
-                            [Op.or]: [
-                                { checked: false },
-                                { checked: null },
+                            [Op.and]: [
+                                { hit_count: { [Op.lt]: 2 } }, // Kondisi hit_count < 2
+                                {
+                                    [Op.or]: [
+                                        { harga_atas: 0 }, // harga_atas = 0
+                                        { harga_bawah: 0 }, // harga_bawah = 0
+                                        { harga_atas: { [Op.is]: null } }, // harga_atas = null
+                                        { harga_bawah: { [Op.is]: null } }, // harga_bawah = null
+                                    ],
+                                },
                             ],
                         },
                     });
@@ -131,25 +138,15 @@ app.use(dashboardRoute);
                             totalToken += promptResult.response.usageMetadata.totalTokenCount * 1;
 
                             const resultData = JSON.parse(promptResult.response.text());
-                            if (!isNaN(resultData.harga_terendah) && !isNaN(resultData.harga_tertinggi)) {
-                                await Cars.update(
-                                    {
-                                        harga_atas: isNaN(resultData.harga_terendah) ? 0 : parseFloat(resultData.harga_terendah),
-                                        harga_bawah: isNaN(resultData.harga_tertinggi) ? 0 : parseFloat(resultData.harga_tertinggi),
-                                        checked: true,
-                                    },
-                                    { where: { id: data.id } }
-                                );
-                            } else {
-                                await Cars.update(
-                                    {
-                                        harga_atas: 0,
-                                        harga_bawah: 0,
-                                        checked: true,
-                                    },
-                                    { where: { id: data.id } }
-                                );
-                            }
+                            console.log(`Harga Terendah: ${resultData.harga_terendah}, Harga Tertinggi: ${resultData.harga_tertinggi}`)
+                            await Cars.update(
+                                {
+                                    harga_atas: !isNaN(resultData.harga_terendah) ? resultData.harga_terendah * 1 : 0,
+                                    harga_bawah: !isNaN(resultData.harga_tertinggi) ? resultData.harga_tertinggi * 1 : 0,
+                                    hit_count: Sequelize.literal('hit_count + 1'),
+                                },
+                                { where: { id: data.id } }
+                            );
                         }
                         const endTime = Date.now();
                         const executionTimeInMs = endTime - startTime;
@@ -168,6 +165,8 @@ app.use(dashboardRoute);
                             createdAt: new Date(),
                             updatedAt: new Date(),
                         });
+                    } else {
+                        console.log('No data to be processed')
                     }
 
                 } catch (error) {

@@ -25,10 +25,7 @@ const getToBeProcessedData = catchAsync(async (req, res) => {
     try {
         const vehicles = await Vehicle.count({
             where: {
-                [Op.or]: [
-                    { checked: false },
-                    { checked: null },
-                ],
+                hit_count: { [Op.lt]: 2 }, // Kondisi hit_count < 2
             },
         })
         res.json({
@@ -46,7 +43,7 @@ const getProcessedData = catchAsync(async (req, res) => {
     try {
         const vehicles = await Vehicle.count({
             where: {
-                checked: true,
+                hit_count: { [Op.gt]: 0 }, // Kondisi hit_count > 0
             },
         })
         res.json({
@@ -62,10 +59,10 @@ const getProcessedData = catchAsync(async (req, res) => {
 
 const getLogData = (async (req, res) => {
 
-    
+
     try {
-        const {startDate, endDate} = req.query
-        
+        const { startDate, endDate } = req.query
+
         const chart1Data = await scheduleLog.findAndCountAll({
             where: {
                 date: {
@@ -78,7 +75,7 @@ const getLogData = (async (req, res) => {
             data: chart1Data.rows,
             total: chart1Data.count,
             error: false,
-            message: "OK - The request was successfull",            
+            message: "OK - The request was successfull",
         });
 
     } catch (error) {
