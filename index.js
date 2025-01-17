@@ -161,7 +161,7 @@ app.use(dashboardRoute);
                         await scheduleLog.sync({ alter: true });
                         await scheduleLog.create({
                             type: 'Scheduled',
-                            date: setUTC7(parseData[0].time),
+                            date: setUTC7(parseData[0]?.time),
                             total_data: dataSet.length,
                             total_token: totalToken,
                             average_token: totalToken / dataSet.length,
