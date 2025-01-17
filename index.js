@@ -71,9 +71,9 @@ app.use(dashboardRoute);
             const jobScheduleData = await jobSchedule.findAll();
             parseData = jobScheduleData.map((item) => item.toJSON());
             return {
-                hour: convDate(parseData[0].time, 'hh'),
-                minute: convDate(parseData[0].time, 'mm'),
-                second: convDate(parseData[0].time, 'ss'),
+                hour: convDate(parseData[0]?.time, 'hh'),
+                minute: convDate(parseData[0]?.time, 'mm'),
+                second: convDate(parseData[0]?.time, 'ss'),
                 parseData,
             };
         }
