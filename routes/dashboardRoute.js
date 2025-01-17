@@ -3,11 +3,11 @@ const { getAllVehicleCount, getToBeProcessedData, getProcessedData, getAITokenCh
 
 const router = require('express').Router()
 
-router.get('/api/dashboard/card1', authentication, getAllVehicleCount)
-router.get('/api/dashboard/card2', authentication, getToBeProcessedData)
-router.get('/api/dashboard/card3', authentication, getProcessedData)
+router.get('/api/dashboard/card1/', authentication, getAllVehicleCount)
+router.get('/api/dashboard/card2/', authentication, getToBeProcessedData)
+router.get('/api/dashboard/card3/', authentication, getProcessedData)
 
-router.get('/api/dashboard/schedule-log', authentication, getLogData)
+router.get('/api/dashboard/schedule-log/', authentication, getLogData)
 
 
 module.exports = router;

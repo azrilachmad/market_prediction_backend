@@ -5,7 +5,14 @@ const catchAsync = require('../utils/catchAsync.js');
 const sequelize = require("../config/db.js");
 const { DataTypes, Op, Sequelize } = require("sequelize");
 const scheduleLog = require('../db/sqModels/scheduleLog.js');
+const jwt = require('jsonwebtoken');
 
+
+const generateToken = (payload) => {
+    return JWT_EXPIRE_IN.sign(payload, process.env.JWT_SECRET_KEY, {
+        expiresIn: process.env.JWT_EXPIRE_IN
+    })
+}
 
 const getAllVehicleCount = catchAsync(async (req, res) => {
     try {
@@ -25,7 +32,7 @@ const getToBeProcessedData = catchAsync(async (req, res) => {
     try {
         const vehicles = await Vehicle.count({
             where: {
-                hit_count: { [Op.lt]: 2 }, // Kondisi hit_count < 2
+                hit_count: { [Op.eq]: 0 }, // Kondisi hit_count < 2
             },
         })
         res.json({
