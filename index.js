@@ -83,8 +83,8 @@ app.use(dashboardRoute);
             }
 
             // Create a new cron job
-            const cronTime = `56 * * * *`; // Dynamic schedule
-            // const cronTime = `${minute} ${hour} * * *`; // Dynamic schedule
+            // const cronTime = `56 * * * *`; // Dynamic schedule
+            const cronTime = `${minute} ${hour} * * *`; // Dynamic schedule
             currentCronJob = cron.schedule(cronTime, async () => {
                 console.log('Price check cron job running...');
 
