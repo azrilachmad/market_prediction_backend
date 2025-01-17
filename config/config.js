@@ -18,7 +18,7 @@ module.exports = {
     "dialect": "postgres",
     // "seederStorage": 'sequelize',
     // Optional logging
-    logging: false,            // Set to true for debug logs; false for no logging
+    // logging: false,            // Set to true for debug logs; false for no logging
 
     // Connection options
     dialectOptions: {
@@ -40,6 +40,6 @@ module.exports = {
     },
 
     // Timezone
-    timezone: "UTC",           // Set to your 
+    timezone: "+07:00",         // Set timezone to UTC+7
   }
 }
