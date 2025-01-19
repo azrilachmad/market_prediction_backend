@@ -38,10 +38,10 @@ const dashboardRoute = require('./routes/dashboardRoute.js');
 
 
 const corsOptions = {
-    origin: '*', // Allowed origin
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed methods
+    origin: 'https://market-prediction.synchro.co.id', // Frontend origin
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
     allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
-    credentials: true, // Include cookies if necessary
+    credentials: true, // Include credentials if necessary
 };
 app.use(cors(corsOptions));
 
