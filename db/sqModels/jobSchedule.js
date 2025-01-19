@@ -43,7 +43,7 @@ const jobSchedule = sequelize.define('jobSchedule', {
     }
   },
   max_record: {
-    type: DataTypes.BOOLEAN,
+    type: DataTypes.INTEGER,
     allowNull: false,
     validate: {
       notNull: {
