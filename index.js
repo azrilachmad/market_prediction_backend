@@ -18,6 +18,9 @@ const dataParameter = require('./db/sqModels/dataParameter.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const dataSource = require('./db/sqModels/dataSource.js');
 const { Op, Sequelize } = require('sequelize');
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
@@ -65,15 +68,22 @@ app.use(dashboardRoute);
     try {
         let parseData = [];
         let currentCronJob = null;
-
+        dayjs.extend(utc);
+        dayjs.extend(timezone);
         // Fetch the schedule data from the database
         async function fetchJobSchedule() {
             const jobScheduleData = await jobSchedule.findAll();
             parseData = jobScheduleData.map((item) => item.toJSON());
+            const date = dayjs(parseData[0]?.time).tz('Asia/Bangkok'); // Use a valid timezone name
+            const hh = date.hour();
+            const mm = date.minute();
+            const ss = date.second();
+
+            console.log(hh, mm, ss);
             return {
-                hour: convDate(parseData[0]?.time, 'hh'),
-                minute: convDate(parseData[0]?.time, 'mm'),
-                second: convDate(parseData[0]?.time, 'ss'),
+                hour: hh,
+                minute: mm,
+                second: ss,
                 parseData,
             };
         }

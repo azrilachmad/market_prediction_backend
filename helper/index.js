@@ -2,11 +2,17 @@ const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 
+// Extend dayjs with plugins
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
 const convDate = (date, customFormat) => {
+  const timezoneOffset = 'Asia/Jakarta'; // UTC+7 timezone
+
   const convert = () => {
-    return dayjs(date).format(customFormat ? customFormat : 'YYYY-MM-DD');
+    return dayjs(date)
+      .tz(timezoneOffset)
+      .format(customFormat ? customFormat : 'YYYY-MM-DD');
   };
 
   if (date && date instanceof Date && !isNaN(date.valueOf())) {
