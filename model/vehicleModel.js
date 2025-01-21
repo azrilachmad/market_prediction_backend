@@ -88,7 +88,7 @@ const Cars = db.define('Cars', {
 
 
 }, {
-    tableName: 'cars',
+    tableName: 'vehicle_price_check',
     timestamps: true,
     updatedAt: 'updated_at',
     createdAt: 'created_at',
