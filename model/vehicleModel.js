@@ -9,13 +9,133 @@ const Cars = db.define('Cars', {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
     },
+    agreement_no: {
+        type: DataTypes.INTEGER,
+        underscored: true,
+    },
+    asset_desc: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    ai_nama_mobil: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    tahun: {
+        type: DataTypes.INTEGER,
+    },
+    nopol: {
+        type: DataTypes.STRING,
+    },
+    umur: {
+        type: DataTypes.INTEGER,
+    },
+    noka: {
+        type: DataTypes.INTEGER,
+    },
+    nosin: {
+        type: DataTypes.INTEGER,
+    },
+    warna: {
+        type: DataTypes.INTEGER,
+    },
+    lokasi_unit: {
+        type: DataTypes.INTEGER,
+        underscored: true,
+    },
+    kota: {
+        type: DataTypes.INTEGER,
+    },
+    provinsi: {
+        type: DataTypes.INTEGER,
+    },
+    receive_date: {
+        type: DataTypes.DATE,
+        underscored: true,
+    },
+    inspection_date: {
+        type: DataTypes.DATE,
+        underscored: true,
+    },
+    approval_date: {
+        type: DataTypes.DATE,
+        underscored: true,
+    },
+    qc_date: {
+        type: DataTypes.DATE,
+        underscored: true,
+    },
+    grade_interior: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    grade_body: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    grade_mesin: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    overall_grade: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    masa_berlaku_pajak: {
+        type: DataTypes.DATE,
+        underscored: true,
+    },
+    masa_berlaku_stnk: {
+        type: DataTypes.DATE,
+        underscored: true,
+    },
+    final_status: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    vehicle_brand: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    vehicle_transmission: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    vehicle_cc: {
+        type: DataTypes.INTEGER,
+        underscored: true,
+    },
+    vehicle_type: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    vehicle_model: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    harga_history: {
+        type: DataTypes.INTEGER,
+        underscored: true,
+    },
+    harga_atas: {
+        type: DataTypes.INTEGER,
+        underscored: true,
+    },
+    harga_bawah: {
+        type: DataTypes.INTEGER,
+        underscored: true,
+    },
+    hit_count: {
+        type: DataTypes.INTEGER,
+        underscored: true,
+    },
+
+
+
     tanggal_jual: {
         type: DataTypes.DATE,
     },
     lokasi: {
-        type: DataTypes.STRING,
-    },
-    desciption: {
         type: DataTypes.STRING,
     },
     jenismobil: {
@@ -70,19 +190,19 @@ const Cars = db.define('Cars', {
     },
     nama_mobil: {
         type: DataTypes.STRING,
-        allowNull:true,
+        allowNull: true,
     },
     harga_atas: {
         type: DataTypes.STRING,
-        allowNull:true,
+        allowNull: true,
     },
     harga_bawah: {
         type: DataTypes.STRING,
-        allowNull:true,
+        allowNull: true,
     },
     hit_count: {
         type: DataTypes.INTEGER,
-        allowNull:true,
+        allowNull: true,
     },
 
 
