@@ -132,6 +132,7 @@ const getVehicleList = catchAsync(async (req, res) => {
     const limitAsNumber = parseInt(req.query.limit) || 10;
     const order = req.query.order;
     const sortBy = req.query.sortBy;
+    const search = req.query.search;
 
     let page = 0;
     if (!Number.isNaN(pageAsNumber) && pageAsNumber > 0) {
@@ -145,7 +146,40 @@ const getVehicleList = catchAsync(async (req, res) => {
 
 
     try {
-        const vehicles = await Cars.findAndCountAll({ limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy ? sortBy : 'hit_count', order]], })
+        const vehicles = await Cars.findAndCountAll({
+            limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy ? sortBy : 'hit_count', order]],
+            where: search
+                ? {
+                    [Op.or]: [
+                        { agreement_no: { [Op.like]: `%${search}%` } },
+                        { asset_desc: { [Op.like]: `%${search}%` } },
+                        { ai_nama_mobil: { [Op.like]: `%${search}%` } },
+                        { tahun: { [Op.like]: `%${search}%` } },
+                        { nopol: { [Op.like]: `%${search}%` } },
+                        { umur: { [Op.like]: `%${search}%` } },
+                        { noka: { [Op.like]: `%${search}%` } },
+                        { warna: { [Op.like]: `%${search}%` } },
+                        { lokasi_unit: { [Op.like]: `%${search}%` } },
+                        { kota: { [Op.like]: `%${search}%` } },
+                        { provinsi: { [Op.like]: `%${search}%` } },
+                        { receive_date: { [Op.like]: `%${search}%` } },
+                        { inspection_date: { [Op.like]: `%${search}%` } },
+                        { approval_date: { [Op.like]: `%${search}%` } },
+                        { qc_date: { [Op.like]: `%${search}%` } },
+                        { masa_berlaku_pajak: { [Op.like]: `%${search}%` } },
+                        { masa_berlaku_stnk: { [Op.like]: `%${search}%` } },
+                        { vehicle_brand: { [Op.like]: `%${search}%` } },
+                        { vehicle_transmission: { [Op.like]: `%${search}%` } },
+                        { vehicle_cc: { [Op.like]: `%${search}%` } },
+                        { vehicle_type: { [Op.like]: `%${search}%` } },
+                        { vehicle_model: { [Op.like]: `%${search}%` } },
+                        { harga_history: { [Op.like]: `%${search}%` } },
+                        { ai_harga_atas: { [Op.like]: `%${search}%` } },
+                        { ai_harga_bawah: { [Op.like]: `%${search}%` } },
+                    ],
+                }
+                : {}, // Empty object if no query 
+        })
         res.json({
             data: vehicles.rows,
             error: false,
