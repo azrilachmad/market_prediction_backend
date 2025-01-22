@@ -32,7 +32,7 @@ const getToBeProcessedData = catchAsync(async (req, res) => {
     try {
         const vehicles = await Vehicle.count({
             where: {
-                hit_count: { [Op.eq]: 0 }, // Kondisi hit_count < 2
+                hit_count: { [Op.eq]: 0, [Op.eq]: null }, // Kondisi hit_count < 2
             },
         })
         res.json({
