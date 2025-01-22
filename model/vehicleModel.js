@@ -9,128 +9,82 @@ const Cars = db.define('Cars', {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
     },
-    agreement_no: {
-        type: DataTypes.INTEGER,
-        underscored: true,
+    tanggal_jual: {
+        type: DataTypes.DATE,
     },
-    asset_desc: {
+    lokasi: {
         type: DataTypes.STRING,
-        underscored: true,
     },
-    ai_nama_mobil: {
+    desciption: {
         type: DataTypes.STRING,
-        underscored: true,
     },
-    tahun: {
+    jenismobil: {
+        type: DataTypes.STRING,
+    },
+    transmisi: {
+        type: DataTypes.STRING,
+    },
+    year: {
         type: DataTypes.INTEGER,
+    },
+    umurmobil: {
+        type: DataTypes.INTEGER,
+    },
+    color: {
+        type: DataTypes.STRING,
     },
     nopol: {
         type: DataTypes.STRING,
     },
-    umur: {
+    pajak: {
+        type: DataTypes.DATE,
+    },
+    stnk: {
+        type: DataTypes.DATE,
+    },
+    grade_all: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    gradeinterior: {
+        type: DataTypes.STRING,
+    },
+    gradebody: {
+        type: DataTypes.STRING,
+    },
+    grademesin: {
+        type: DataTypes.STRING,
+    },
+    km: {
         type: DataTypes.INTEGER,
     },
-    noka: {
-        type: DataTypes.STRING,
-    },
-    nosin: {
-        type: DataTypes.STRING,
-    },
-    warna: {
-        type: DataTypes.STRING,
-    },
-    lokasi_unit: {
-        type: DataTypes.STRING,
-        underscored: true,
-    },
-    kota: {
-        type: DataTypes.STRING,
-    },
-    provinsi: {
-        type: DataTypes.STRING,
-    },
-    receive_date: {
-        type: DataTypes.DATE,
-        underscored: true,
-    },
-    inspection_date: {
-        type: DataTypes.DATE,
-        underscored: true,
-    },
-    approval_date: {
-        type: DataTypes.DATE,
-        underscored: true,
-    },
-    qc_date: {
-        type: DataTypes.DATE,
-        underscored: true,
-    },
-    grade_interior: {
-        type: DataTypes.STRING,
-        underscored: true,
-    },
-    grade_body: {
-        type: DataTypes.STRING,
-        underscored: true,
-    },
-    grade_mesin: {
-        type: DataTypes.STRING,
-        underscored: true,
-    },
-    overall_grade: {
-        type: DataTypes.STRING,
-        underscored: true,
-    },
-    masa_berlaku_pajak: {
-        type: DataTypes.DATE,
-        underscored: true,
-    },
-    masa_berlaku_stnk: {
-        type: DataTypes.DATE,
-        underscored: true,
-    },
-    final_status: {
-        type: DataTypes.STRING,
-        underscored: true,
-    },
-    vehicle_brand: {
-        type: DataTypes.STRING,
-        underscored: true,
-    },
-    vehicle_transmission: {
-        type: DataTypes.STRING,
-        underscored: true,
-    },
-    vehicle_cc: {
+    bottom_price: {
         type: DataTypes.INTEGER,
-        underscored: true,
     },
-    vehicle_type: {
+    status: {
         type: DataTypes.STRING,
-        underscored: true,
     },
-    vehicle_model: {
+    harga_terbentuk: {
+        type: DataTypes.INTEGER,
+        underscored: true
+    },
+    nama_mobil: {
         type: DataTypes.STRING,
-        underscored: true,
+        allowNull:true,
     },
-    harga_history: {
-        type: DataTypes.INTEGER,
-        underscored: true,
+    harga_atas: {
+        type: DataTypes.STRING,
+        allowNull:true,
     },
-    ai_harga_atas: {
-        type: DataTypes.INTEGER,
-        underscored: true,
+    harga_bawah: {
+        type: DataTypes.STRING,
+        allowNull:true,
     },
-    ai_harga_bawah: {
-        type: DataTypes.INTEGER,
-        underscored: true,
-    },
-    hit_count: {
-        type: DataTypes.INTEGER,
-        underscored: true,
-    },
+
+
+
 }, {
-    tableName: 'vehicle_price_check_ai',
+    tableName: 'cars',
     timestamps: true,
     updatedAt: 'updated_at',
     createdAt: 'created_at',
