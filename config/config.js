@@ -6,7 +6,7 @@ module.exports = {
     "password": process.env.DB_PASSWORD,
     "database": process.env.DB_NAME,
     "host": process.env.DB_HOST,
-    "dialect": "mysql",
+    "dialect": "postgres",
     // "seederStorage": 'sequelize'
   },
   "production": {
@@ -15,7 +15,7 @@ module.exports = {
     "database": process.env.DB_NAME,
     "host": process.env.DB_HOST,
     "port": process.env.DB_PORT,
-    "dialect": "mysql",
+    "dialect": "postgres",
     // "seederStorage": 'sequelize',
     // Optional logging
     // logging: false,            // Set to true for debug logs; false for no logging

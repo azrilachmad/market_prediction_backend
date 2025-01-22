@@ -31,23 +31,23 @@ const Cars = db.define('Cars', {
         type: DataTypes.INTEGER,
     },
     noka: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
     },
     nosin: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
     },
     warna: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
     },
     lokasi_unit: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         underscored: true,
     },
     kota: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
     },
     provinsi: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
     },
     receive_date: {
         type: DataTypes.DATE,
@@ -117,11 +117,11 @@ const Cars = db.define('Cars', {
         type: DataTypes.INTEGER,
         underscored: true,
     },
-    harga_atas: {
+    ai_harga_atas: {
         type: DataTypes.INTEGER,
         underscored: true,
     },
-    harga_bawah: {
+    ai_harga_bawah: {
         type: DataTypes.INTEGER,
         underscored: true,
     },
