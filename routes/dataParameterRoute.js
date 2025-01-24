@@ -1,9 +1,10 @@
 const express = require('express');
-const { getAllDataParameter, createDataParameter, editDataParameter, deleteDataParameter } = require('../controllers/dataParameterController.js');
+const { getAllDataParameter, createDataParameter, editDataParameter, deleteDataParameter, getVehicleColumns } = require('../controllers/dataParameterController.js');
 const { authentication } = require('../controllers/authController.js');
 
 const router = express.Router()
 
+router.get('/api/data-parameter/get-column', authentication, getVehicleColumns)
 router.get('/api/data-parameter/', authentication, getAllDataParameter)
 router.post('/api/data-parameter/create', authentication, createDataParameter)
 router.post('/api/data-parameter/edit/:id', authentication, editDataParameter)

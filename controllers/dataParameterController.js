@@ -5,7 +5,8 @@ const AppError = require('../utils/appError')
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { Op } = require('sequelize');
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcrypt');
+const sequelize = require('../config/db');
 
 
 const generateToken = (payload) => {
@@ -13,6 +14,23 @@ const generateToken = (payload) => {
         expiresIn: process.env.JWT_EXPIRE_IN
     })
 }
+
+const getVehicleColumns = catchAsync(async (req, res, next) => {
+    const columns = await sequelize.query(
+        `SHOW COLUMNS FROM vehicle_price_check_ai;`,
+        { type: sequelize.QueryTypes.SHOW }
+    );
+
+    const filtered = columns[0].map((data) => {
+        return { id: data.Field, name: data.Field }
+    })
+    res.json({
+        data: filtered,
+        error: false,
+        message: "OK - The request was successfull",
+    })
+
+})
 
 const getAllDataParameter = catchAsync(async (req, res, next) => {
 
@@ -192,9 +210,8 @@ const editDataParameter = catchAsync(async (req, res, next) => {
     if (table_column) updateData.table_column = table_column;
     if (status) updateData.status = status
 
-    const [updatedRowsCount, updatedRows] = await dataParameter.update(updateData, {
+    const [updatedRowsCount] = await dataParameter.update(updateData, {
         where: { id: req.params.id },
-        returning: true, // Return the updated rows (needed for returning updated user data)
     });
 
     if (updatedRowsCount === 0) {
@@ -204,14 +221,23 @@ const editDataParameter = catchAsync(async (req, res, next) => {
         });
     }
 
-    const updatedDataParameter = updatedRows[0].toJSON(); // Get updated user instance
+    // Fetch the updated data manually
+    const updatedDataParameter = await dataParameter.findByPk(req.params.id);
+
+    if (!updatedDataParameter) {
+        return res.status(404).json({
+            status: 'Failed',
+            message: 'Failed to fetch updated data',
+        });
+    }
 
     // Exclude sensitive fields
-    delete updatedDataParameter.deletedAt;
+    const updatedDataParameterJSON = updatedDataParameter.toJSON();
+    delete updatedDataParameterJSON.deletedAt;
 
     return res.status(200).json({
         status: 'Success',
-        data: updatedDataParameter,
+        data: updatedDataParameterJSON,
     });
 });
 
@@ -237,4 +263,4 @@ const deleteDataParameter = catchAsync(async (req, res, next) => {
 
 
 
-module.exports = { getAllDataParameter, createDataParameter, editDataParameter, deleteDataParameter }
+module.exports = { getVehicleColumns, getAllDataParameter, createDataParameter, editDataParameter, deleteDataParameter }
