@@ -181,97 +181,111 @@ const editUser = catchAsync(async (req, res, next) => {
             status: 'Failed',
             message: 'User not found',
         });
-    }
+    } else {
 
-    // Validation for updating user fields
-    await body('userType')
-        .optional() // Allow this field to be optional
-        .notEmpty()
-        .withMessage('Role is required')
-        .run(req);
+        // Validation for updating user fields
+        await body('userType')
+            .notEmpty() // Allow this field to be optional
+            .notEmpty()
+            .withMessage('Role is required')
+            .run(req);
 
-    await body('email')
-        .optional() // Allow this field to be optional
-        .isEmail()
-        .withMessage('Invalid email address')
-        .bail()
-        .custom(async (value) => {
-            if (value) {
-                const userExist = await user.findOne({
-                    where: { email: value, id: { [Op.ne]: req.params.id } }
-                }); // Ensure no other user has the same email
-                if (userExist) {
-                    throw new Error('Email already exists');
+        await body('email')
+            .notEmpty() // Allow this field to be optional
+            .isEmail()
+            .withMessage('Invalid email address')
+            .bail()
+            .custom(async (value, { req }) => {
+                if (value) {
+                    // Skip validation if the email is the same as the current email
+                    if (value === existingUser.email) {
+                        return true;
+                    }
+
+                    // Check if the email is already in use by another user
+                    const userExist = await user.findOne({
+                        where: { email: value, id: { [Op.ne]: req.params.id } }
+                    });
+                    if (userExist) {
+                        throw new Error('Email already exists');
+                    }
                 }
-            }
-        })
-        .run(req);
+            })
+            .run(req);
 
-    await body('password')
-        .optional()
-        .isLength({ min: 6 })
-        .withMessage('Password must be at least 6 characters long')
-        .run(req);
+        await body('password')
+            .notEmpty()
+            .isLength({ min: 6 })
+            .withMessage('Password must be at least 6 characters long')
+            .run(req);
 
-    await body('confirmPassword')
-        .optional()
-        .custom((value, { req }) => value === req.body.password)
-        .withMessage('Passwords do not match')
-        .run(req);
+        await body('confirmPassword')
+            .notEmpty()
+            .custom((value, { req }) => value === req.body.password)
+            .withMessage('Passwords do not match')
+            .run(req);
 
-    await body('name')
-        .optional()
-        .notEmpty()
-        .withMessage('Name is required')
-        .run(req);
+        await body('name')
+            .optional()
+            .notEmpty()
+            .withMessage('Name is required')
+            .run(req);
 
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        const formattedErrors = errors.array().reduce((acc, error) => {
-            acc[error.path] = error.msg;
-            return acc;
-        }, {});
+        // Check for validation errors
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            const formattedErrors = errors.array().reduce((acc, error) => {
+                acc[error.path] = error.msg;
+                return acc;
+            }, {});
 
-        return res.status(400).json({
-            status: 'Failed',
-            errors: formattedErrors,
+            return res.status(400).json({
+                status: 'Failed',
+                errors: formattedErrors,
+            });
+        }
+
+        // Update the user with validated fields
+        const { userType, name, email, password } = req.body;
+
+        // Use update method instead of save to ensure only existing users are updated
+        const updateData = {};
+
+        if (userType) updateData.userType = userType;
+        if (name) updateData.name = name;
+        if (email) updateData.email = email;
+        if (password) updateData.password = bcrypt.hashSync(password, 10);
+
+        const [updatedRowsCount] = await user.update(updateData, {
+            where: { id: req.params.id },
+        });
+
+        if (updatedRowsCount === 0) {
+            return res.status(404).json({
+                status: 'Failed',
+                message: 'User not found',
+            });
+        }
+
+        const updatedUser = await user.findByPk(req.params.id);
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                status: 'Failed',
+                message: 'Failed to fetch updated data',
+            });
+        }
+
+        // Exclude sensitive fields
+        const updatedUserJSON = updatedUser.toJSON();
+        delete updatedUserJSON.deletedAt;
+
+        return res.status(200).json({
+            status: 'Success',
+            data: updatedUserJSON,
         });
     }
 
-    // Update the user with validated fields
-    const { userType, name, email, password } = req.body;
-
-    // Use update method instead of save to ensure only existing users are updated
-    const updateData = {};
-
-    if (userType) updateData.userType = userType;
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
-    if (password) updateData.password = bcrypt.hashSync(password, 10);
-
-    const [updatedRowsCount, updatedRows] = await user.update(updateData, {
-        where: { id: req.params.id },
-        returning: true, // Return the updated rows (needed for returning updated user data)
-    });
-
-    if (updatedRowsCount === 0) {
-        return res.status(404).json({
-            status: 'Failed',
-            message: 'User not found',
-        });
-    }
-
-    const updatedUser = updatedRows[0].toJSON(); // Get updated user instance
-
-    // Exclude sensitive fields
-    delete updatedUser.password;
-    delete updatedUser.deletedAt;
-
-    return res.status(200).json({
-        status: 'Success',
-        data: updatedUser,
-    });
 });
 
 const deleteUser = catchAsync(async (req, res, next) => {
