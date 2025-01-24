@@ -192,9 +192,8 @@ const editDataSource = catchAsync(async (req, res, next) => {
     if (address) updateData.address = address;
     if (status) updateData.status = status
 
-    const [updatedRowsCount, updatedRows] = await dataSource.update(updateData, {
+    const [updatedRowsCount] = await dataSource.update(updateData, {
         where: { id: req.params.id },
-        returning: true, // Return the updated rows (needed for returning updated user data)
     });
 
     if (updatedRowsCount === 0) {
@@ -204,14 +203,22 @@ const editDataSource = catchAsync(async (req, res, next) => {
         });
     }
 
-    const updatedDataSource = updatedRows[0].toJSON(); // Get updated user instance
+    const updatedDataSource = await dataSource.findByPk(req.params.id);
+
+    if (!updatedDataSource) {
+        return res.status(404).json({
+            status: 'Failed',
+            message: 'Failed to fetch updated data',
+        });
+    }
 
     // Exclude sensitive fields
-    delete updatedDataSource.deletedAt;
+    const updatedDataSourceJSON = updatedDataSource.toJSON();
+    delete updatedDataSourceJSON.deletedAt;
 
     return res.status(200).json({
         status: 'Success',
-        data: updatedDataSource,
+        data: updatedDataSourceJSON,
     });
 });
 
