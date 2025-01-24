@@ -31,7 +31,7 @@ const jobSchedule = sequelize.define('jobSchedule', {
     }
   },
   time: {
-    type: DataTypes.TIME,
+    type: DataTypes.DATE,
     allowNull: false,
     validate: {
       notNull: {

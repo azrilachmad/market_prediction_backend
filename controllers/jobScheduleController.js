@@ -49,7 +49,7 @@ const getAllJobSchedule = catchAsync(async (req, res, next) => {
 
 
 const editJobSchedule = catchAsync(async (req, res, next) => {
-    // Find the user by ID from the route marketplace_name
+    // Find the job schedule by ID
     const existingJobSchedule = await jobSchedule.findByPk(req.params.id);
     if (!existingJobSchedule) {
         return res.status(404).json({
@@ -65,7 +65,7 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
         .custom(async (value) => {
             if (value) {
                 const marketplaceExist = await jobSchedule.findOne({
-                    where: { job_schedule: value, id: { [Op.ne]: req.params.id } }
+                    where: { job_schedule: value, id: { [Op.ne]: req.params.id } },
                 });
                 if (marketplaceExist) {
                     throw new Error('Marketplace Name already exists');
@@ -80,7 +80,7 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
         .custom(async (value) => {
             if (value) {
                 const timeExist = await jobSchedule.findOne({
-                    where: { time: value, id: { [Op.ne]: req.params.id } }
+                    where: { time: value, id: { [Op.ne]: req.params.id } },
                 });
                 if (timeExist) {
                     throw new Error('Address name already exists');
@@ -108,19 +108,16 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
         });
     }
 
-    // Update the user with validated fields
+    // Update the job schedule with validated fields
     const { job_schedule, time, max_record } = req.body;
 
-    // Use update method instead of save to ensure only existing users are updated
     const updateData = {};
-
     if (job_schedule) updateData.job_schedule = job_schedule;
     if (time) updateData.time = time;
-    if (max_record) updateData.max_record = max_record
+    if (max_record) updateData.max_record = max_record;
 
-    const [updatedRowsCount, updatedRows] = await jobSchedule.update(updateData, {
+    const [updatedRowsCount] = await jobSchedule.update(updateData, {
         where: { id: req.params.id },
-        returning: true, // Return the updated rows (needed for returning updated user data)
     });
 
     if (updatedRowsCount === 0) {
@@ -130,16 +127,15 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
         });
     }
 
-    const updatedJobSchedule = updatedRows[0].toJSON(); // Get updated user instance
-
-    // Exclude sensitive fields
-    delete updatedJobSchedule.deletedAt;
+    // Fetch the updated record manually
+    const updatedJobSchedule = await jobSchedule.findByPk(req.params.id);
 
     return res.status(200).json({
         status: 'Success',
         data: updatedJobSchedule,
     });
 });
+
 
 
 
