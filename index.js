@@ -37,11 +37,12 @@ const dataParameterRoute = require('./routes/dataParameterRoute.js')
 const dataSourceRoute = require('./routes/dataSourceRoute.js')
 const jobScheduleRoute = require('./routes/jobScheduleRoute.js');
 const dashboardRoute = require('./routes/dashboardRoute.js');
+const VehiclePriceCheck = require('./model/vehicleCompareModel.js');
 
 
 
 const corsOptions = {
-    origin: ['https://pricecheck.sipector.com/', 'https://market-prediction.synchro.co.id', 'http://147.139.171.166:3000', ,'http://localhost:3000', '*'], // Frontend URL
+    origin: ['https://pricecheck.sipector.com/', 'https://market-prediction.synchro.co.id', 'http://147.139.171.166:3000', , 'http://localhost:3000', '*'], // Frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Include OPTIONS
     allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
     credentials: true, // Allow cookies/auth headers
@@ -97,7 +98,7 @@ app.use(dashboardRoute);
             }
 
             // Create a new cron job
-            // const cronTime = `56 * * * *`; // Dynamic schedule
+            // const cronTime = `* * * * * *`; // Dynamic schedule
             const cronTime = `${minute} ${hour} * * *`; // Dynamic schedule
             currentCronJob = cron.schedule(cronTime, async () => {
                 console.log('Price check cron job running...');
@@ -109,16 +110,16 @@ app.use(dashboardRoute);
                     const rawData = await Cars.findAndCountAll({
                         limit: parseData[0].max_record,
                         offset: 0,
-                        order: [['updated_at', 'ASC']],
+                        order: [['created_at', 'ASC']],
                         where: {
                             [Op.and]: [
                                 { hit_count: { [Op.lt]: 2 } }, // Kondisi hit_count < 2
                                 {
                                     [Op.or]: [
-                                        { harga_atas: 0 }, // harga_atas = 0
-                                        { harga_bawah: 0 }, // harga_bawah = 0
-                                        { harga_atas: { [Op.is]: null } }, // harga_atas = null
-                                        { harga_bawah: { [Op.is]: null } }, // harga_bawah = null
+                                        { ai_harga_atas: 0 }, // harga_atas = 0
+                                        { ai_harga_bawah: 0 }, // harga_bawah = 0
+                                        { ai_harga_atas: { [Op.is]: null } }, // harga_atas = null
+                                        { ai_harga_bawah: { [Op.is]: null } }, // harga_bawah = null
                                     ],
                                 },
                             ],
@@ -141,22 +142,40 @@ app.use(dashboardRoute);
 
                     if (dataSet.length > 0) {
                         for (const data of dataSet) {
+
+                            // Proses Compare Price Check 
+                            const rawCompare = await VehiclePriceCheck.findAndCountAll({
+                                where: {
+                                    nama_mobil: data.ai_nama_mobil
+                                },
+                                order: [['created_at', 'DESC']]
+                            });
+                            let compareSet = rawCompare.rows.map((item) => item.dataValues);
+                            console.log("AI Nama Mobil:" + data.ai_nama_mobil)
+                            console.log("Compare nama mobil: " + compareSet[0].nama_mobil);
+
+
+                            // Proses mapping list data parameter
                             const parameterString = Object.entries(parameterSet)
                                 .map(([key, value]) => `${value}: ${data[key]}`)
                                 .join(", ");
+
+                            //  Proses mapping data source
                             const referenceLinks = sourceSet.map((link) => `- ${link}`).join(", ");
 
-                            const prompt = `Berikan Average Market Price untuk ${parameterString} berikut juga bisa menjadi referensi sumber: ${referenceLinks} \n. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
+                            // Define Prompt
+                            const prompt = `Berikan Harga Atas dan Harga Bawah dengan mengabaikan data outlier untuk ${parameterString}. Gunakan metode Interquartile Range (IQR) untuk mendeteksi dan menghapus outlier, lalu tentukan harga atas dan harga bawah berdasarkan data yang telah dibersihkan. berikut juga bisa menjadi referensi sumber: ${sourceSet.length > 0 ? referenceLinks : '-'} \n. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
 
+                            // Prompt Process (Gemini Generative AI)
                             const promptResult = await model.generateContent(prompt);
                             totalToken += promptResult.response.usageMetadata.totalTokenCount * 1;
-
                             const resultData = JSON.parse(promptResult.response.text());
                             console.log(`Harga Terendah: ${resultData.harga_terendah}, Harga Tertinggi: ${resultData.harga_tertinggi}`)
+
                             await Cars.update(
                                 {
-                                    harga_atas: !isNaN(resultData.harga_terendah) ? resultData.harga_terendah * 1 : 0,
-                                    harga_bawah: !isNaN(resultData.harga_tertinggi) ? resultData.harga_tertinggi * 1 : 0,
+                                    ai_harga_atas: !isNaN(resultData.harga_terendah) ? resultData.harga_terendah * 1 : 0,
+                                    ai_harga_bawah: !isNaN(resultData.harga_tertinggi) ? resultData.harga_tertinggi * 1 : 0,
                                     hit_count: Sequelize.literal('hit_count + 1'),
                                 },
                                 { where: { id: data.id } }
@@ -210,7 +229,7 @@ app.use(dashboardRoute);
                 console.log('Schedule updated in database, rescheduling the cron job...');
                 schedulePriceCheck(updatedScheduleData);
             }
-        }, 60000); // Check every 60 seconds
+        }, 20000); // Check every 60 seconds
 
     } catch (error) {
         console.error("Error occurred:", error);
