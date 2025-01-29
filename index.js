@@ -42,7 +42,7 @@ const VehiclePriceCheck = require('./model/vehicleCompareModel.js');
 
 
 const corsOptions = {
-    origin: ['https://pricecheck.sipector.com/', 'https://market-prediction.synchro.co.id', 'http://147.139.171.166:3000', , 'http://localhost:3000', '*'], // Frontend URL
+    origin: ['https://pricecheck.sipector.com', 'https://market-prediction.synchro.co.id', 'http://147.139.171.166:3000', , 'http://localhost:3000', '*'], // Frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Include OPTIONS
     allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
     credentials: true, // Allow cookies/auth headers
