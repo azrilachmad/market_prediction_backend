@@ -113,7 +113,7 @@ const Cars = db.define('Cars', {
         type: DataTypes.STRING,
         underscored: true,
     },
-    harga_history: {
+    ai_harga_history: {
         type: DataTypes.INTEGER,
         underscored: true,
     },

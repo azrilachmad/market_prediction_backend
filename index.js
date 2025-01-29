@@ -37,7 +37,7 @@ const dataParameterRoute = require('./routes/dataParameterRoute.js')
 const dataSourceRoute = require('./routes/dataSourceRoute.js')
 const jobScheduleRoute = require('./routes/jobScheduleRoute.js');
 const dashboardRoute = require('./routes/dashboardRoute.js');
-const VehiclePriceCheck = require('./model/vehicleCompareModel.js');
+const vehicleSales = require('./model/vehicleSales.js');
 
 
 
@@ -144,15 +144,18 @@ app.use(dashboardRoute);
                         for (const data of dataSet) {
 
                             // Proses Compare Price Check 
-                            const rawCompare = await VehiclePriceCheck.findAndCountAll({
+                            const rawCompare = await vehicleSales.findAndCountAll({
                                 where: {
                                     nama_mobil: data.ai_nama_mobil
                                 },
-                                order: [['created_at', 'DESC']]
+                                order: [
+                                    [Sequelize.literal("STR_TO_DATE(tgl, '%d/%m/%Y')"), "DESC"]
+                                ]
                             });
                             let compareSet = rawCompare.rows.map((item) => item.dataValues);
                             console.log("AI Nama Mobil:" + data.ai_nama_mobil)
-                            console.log("Compare nama mobil: " + compareSet[0].nama_mobil);
+                            console.log("Compare nama mobil: " + compareSet[0]?.nama_mobil);
+                            console.log("Selling: " + compareSet[0].selling);
 
 
                             // Proses mapping list data parameter
@@ -174,6 +177,7 @@ app.use(dashboardRoute);
 
                             await Cars.update(
                                 {
+                                    ai_harga_history: compareSet.length > 0 ? !isNaN(compareSet[0].selling) ? compareSet[0].selling * 1 : 0 : 0,
                                     ai_harga_atas: !isNaN(resultData.harga_tertinggi) ? resultData.harga_tertinggi * 1 : 0,
                                     ai_harga_bawah: !isNaN(resultData.harga_terendah) ? resultData.harga_terendah * 1 : 0,
                                     hit_count: Sequelize.literal('hit_count + 1'),

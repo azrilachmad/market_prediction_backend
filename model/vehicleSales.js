@@ -3,22 +3,28 @@ const db = require("./../config/db.js");
 require('dotenv').config()
 
 
-const VehiclePriceCheck = db.define('VehiclePriceCheck', {
+const vehicleSales = db.define('vehicleSales', {
     id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
     },
-    agreement_no: {
-        type: DataTypes.INTEGER,
-        underscored: true,
+    tgl: {
+        type: DataTypes.STRING,
     },
-    asset_desc: {
+    lokasi_unit: {
         type: DataTypes.STRING,
         underscored: true,
     },
-    tahun: {
-        type: DataTypes.INTEGER,
+    asset_description: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    year2: {
+        type: DataTypes.STRING,
+    },
+    warna: {
+        type: DataTypes.STRING,
     },
     nopol: {
         type: DataTypes.STRING,
@@ -26,66 +32,88 @@ const VehiclePriceCheck = db.define('VehiclePriceCheck', {
     umur: {
         type: DataTypes.INTEGER,
     },
-    noka: {
+    pajak: {
         type: DataTypes.STRING,
     },
-    nosin: {
+    stnk: {
         type: DataTypes.STRING,
     },
-    warna: {
+    grade: {
         type: DataTypes.STRING,
     },
-    lokasi_unit: {
+    note: {
+        type: DataTypes.TEXT,
+    },
+    km: {
+        type: DataTypes.TEXT,
+    },
+    bottom_price: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    buy_now: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    status: {
+        type: DataTypes.STRING,
+    },
+    selling: {
+        type: DataTypes.STRING,
+    },
+    buyer: {
+        type: DataTypes.STRING,
+    },
+    channel: {
+        type: DataTypes.STRING,
+    },
+    user_id: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    fee_admin: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    total_va: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    pic: {
+        type: DataTypes.STRING,
+    },
+    region_warehouse: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    provinsi_mitra: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    final_status: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    va_bayar: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
+    provinsi_lokasi_unit: {
         type: DataTypes.STRING,
         underscored: true,
     },
     kota: {
         type: DataTypes.STRING,
     },
-    provinsi: {
-        type: DataTypes.STRING,
-    },
-    receive_date: {
-        type: DataTypes.DATE,
-        underscored: true,
-    },
-    inspection_date: {
-        type: DataTypes.DATE,
-        underscored: true,
-    },
-    approval_date: {
-        type: DataTypes.DATE,
-        underscored: true,
-    },
-    qc_date: {
-        type: DataTypes.DATE,
-        underscored: true,
-    },
-    grade_interior: {
+    regional_mitra: {
         type: DataTypes.STRING,
         underscored: true,
     },
-    grade_body: {
+    inv_amount: {
         type: DataTypes.STRING,
         underscored: true,
     },
-    grade_mesin: {
-        type: DataTypes.STRING,
-        underscored: true,
-    },
-    overall_grade: {
-        type: DataTypes.STRING,
-        underscored: true,
-    },
-    masa_berlaku_pajak: {
-        type: DataTypes.DATE,
-        underscored: true,
-    },
-    masa_berlaku_stnk: {
-        type: DataTypes.DATE,
-        underscored: true,
-    },
-    final_status: {
+    harga_mp: {
         type: DataTypes.STRING,
         underscored: true,
     },
@@ -98,7 +126,7 @@ const VehiclePriceCheck = db.define('VehiclePriceCheck', {
         underscored: true,
     },
     vehicle_cc: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.FLOAT,
         underscored: true,
     },
     vehicle_type: {
@@ -114,14 +142,14 @@ const VehiclePriceCheck = db.define('VehiclePriceCheck', {
         underscored: true,
     },
 }, {
-    tableName: 'vehicle_price_check',
+    tableName: 'vehicle_sales',
     timestamps: true,
     updatedAt: 'updated_at',
     createdAt: 'created_at',
     // freezeTableName: true
 });
 
-module.exports = VehiclePriceCheck;
+module.exports = vehicleSales;
 (async () => {
     await db.sync();
 })();
