@@ -174,8 +174,8 @@ app.use(dashboardRoute);
 
                             await Cars.update(
                                 {
-                                    ai_harga_atas: !isNaN(resultData.harga_terendah) ? resultData.harga_terendah * 1 : 0,
-                                    ai_harga_bawah: !isNaN(resultData.harga_tertinggi) ? resultData.harga_tertinggi * 1 : 0,
+                                    ai_harga_atas: !isNaN(resultData.harga_tertinggi) ? resultData.harga_tertinggi * 1 : 0,
+                                    ai_harga_bawah: !isNaN(resultData.harga_terendah) ? resultData.harga_terendah * 1 : 0,
                                     hit_count: Sequelize.literal('hit_count + 1'),
                                 },
                                 { where: { id: data.id } }
