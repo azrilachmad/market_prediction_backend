@@ -153,9 +153,9 @@ app.use(dashboardRoute);
                                 ]
                             });
                             let compareSet = rawCompare.rows.map((item) => item.dataValues);
-                            console.log("AI Nama Mobil:" + data.ai_nama_mobil)
-                            console.log("Compare nama mobil: " + compareSet[0]?.nama_mobil);
-                            console.log("Selling: " + compareSet[0].selling);
+                            // console.log("AI Nama Mobil:" + data.ai_nama_mobil)
+                            // console.log("Compare nama mobil: " + compareSet[0]?.nama_mobil);
+                            // console.log("Selling: " + compareSet[0].selling);
 
 
                             // Proses mapping list data parameter
