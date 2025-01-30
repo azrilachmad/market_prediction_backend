@@ -146,10 +146,12 @@ app.use(dashboardRoute);
                             // Proses Compare Price Check 
                             const rawCompare = await vehicleSales.findAndCountAll({
                                 where: {
-                                    nama_mobil: data.ai_nama_mobil
+                                    nama_mobil: {
+                                        [Op.like]: `${data.ai_nama_mobil}%`
+                                    } 
                                 },
                                 order: [
-                                    [Sequelize.literal("STR_TO_DATE(tgl, '%d/%m/%Y')"), "DESC"]
+                                    [Sequelize.literal("STR_TO_DATE(tgl, '%d/%m/%Y')"), "desc"]
                                 ]
                             });
                             let compareSet = rawCompare.rows.map((item) => item.dataValues);
@@ -175,9 +177,13 @@ app.use(dashboardRoute);
                             const resultData = JSON.parse(promptResult.response.text());
                             console.log(`Harga Terendah: ${resultData.harga_terendah}, Harga Tertinggi: ${resultData.harga_tertinggi}`)
 
+                            let comparePrice = 0;
+
+                            if (compareSet.length > 0) { comparePrice = compareSet[0].selling }
+
                             await Cars.update(
                                 {
-                                    ai_harga_history: compareSet.length > 0 ? !isNaN(compareSet[0].selling) ? compareSet[0].selling * 1 : 0 : 0,
+                                    ai_harga_history: !isNaN(comparePrice) ? comparePrice : parseInt(comparePrice.replace(/\./g, "").trim(), 10),
                                     ai_harga_atas: !isNaN(resultData.harga_tertinggi) ? resultData.harga_tertinggi * 1 : 0,
                                     ai_harga_bawah: !isNaN(resultData.harga_terendah) ? resultData.harga_terendah * 1 : 0,
                                     hit_count: Sequelize.literal('hit_count + 1'),
