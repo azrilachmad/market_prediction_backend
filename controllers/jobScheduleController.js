@@ -112,6 +112,7 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
     // Update the job schedule with validated fields
     const { job_schedule, time, max_record } = req.body;
 
+
     const updateData = {};
     if (job_schedule) updateData.job_schedule = job_schedule;
     if (time) updateData.time = convDate(time, 'YYYY-MM-DD HH:mm:ss');
