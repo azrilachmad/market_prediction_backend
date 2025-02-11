@@ -32,6 +32,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
         wilayah_kendaraan,
     } = req.body
 
+
     try {
         const dataSourceData = await dataSource.findAndCountAll({ where: { status: true } });
         let sourceSet = dataSourceData.rows.map((item) => item.dataValues.address);
