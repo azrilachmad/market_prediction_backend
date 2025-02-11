@@ -115,7 +115,7 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
 
     const updateData = {};
     if (job_schedule) updateData.job_schedule = job_schedule;
-    if (time) updateData.time = convDate(time, 'YYYY-MM-DD HH:mm:ss');
+    if (time) updateData.time = dayjs(time).format("YYYY-MM-DD HH:mm:ss");
     if (max_record) updateData.max_record = max_record;
 
     const [updatedRowsCount] = await jobSchedule.update(updateData, {
