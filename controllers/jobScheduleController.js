@@ -116,10 +116,13 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
     const { job_schedule, time, max_record } = req.body;
 
 
+   
+
     const updateData = {};
     if (job_schedule) updateData.job_schedule = job_schedule;
     if (time) updateData.time = dayjs.tz(time, "Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss");
     if (max_record) updateData.max_record = max_record;
+    console.log(updateData.time)
 
     const [updatedRowsCount] = await jobSchedule.update(updateData, {
         where: { id: req.params.id },
