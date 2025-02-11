@@ -3,7 +3,7 @@ const { authentication, restrictTo } = require('../controllers/authController.js
 
 const router = require('express').Router()
 
-router.post('/api/vehicle/predicts', authentication, createSinglePredict)
+router.post('/api/vehicle/predict', authentication, createSinglePredict)
 router.get('/api/chart/', getChart)
 router.get('/api/vehicles/', authentication, getVehicleList)
 router.get('/api/vehicles/count', authentication, getCarCount)
