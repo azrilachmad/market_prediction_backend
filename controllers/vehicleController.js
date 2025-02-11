@@ -149,7 +149,7 @@ const getVehicleList = catchAsync(async (req, res) => {
 
     try {
         const vehicles = await Cars.findAndCountAll({
-            limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy ? sortBy : 'hit_count', order]],
+            limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy ? sortBy : 'hit_count', order ? order : 'DESC']],
             where: search
                 ? {
                     [Op.or]: [
