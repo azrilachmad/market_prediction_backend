@@ -5,7 +5,8 @@ const AppError = require('../utils/appError')
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { Op } = require('sequelize');
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcrypt');
+const { convDate } = require('../helper');
 
 
 const generateToken = (payload) => {
@@ -113,7 +114,7 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
 
     const updateData = {};
     if (job_schedule) updateData.job_schedule = job_schedule;
-    if (time) updateData.time = time;
+    if (time) updateData.time = convDate(time, 'YYYY-MM-DD HH:mm:ss');
     if (max_record) updateData.max_record = max_record;
 
     const [updatedRowsCount] = await jobSchedule.update(updateData, {
