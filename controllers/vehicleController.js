@@ -263,8 +263,30 @@ const getChart = catchAsync(async (req, res) => {
 const updateVehicleData = catchAsync(async (req, res) => {
     try {
 
+        const rawCompare = await vehicleSales.findAndCountAll({
+            where: {
+                nama_mobil: {
+                    [Op.like]: `${data.ai_nama_mobil}%`
+                }
+            },
+            order: [
+                [Sequelize.literal("STR_TO_DATE(tgl, '%d/%m/%Y')"), "desc"]
+            ]
+        });
+        let compareSet = rawCompare.rows.map((item) => item.dataValues);
+
+        let comparePrice = 0;
+
+        if (compareSet.length > 0) { comparePrice = compareSet[0].selling }
+
+
         const { id, harga_bawah, harga_atas, total_token } = req.body;
-        await Vehicle.update({ harga_bawah, harga_atas, hit_count: Sequelize.literal('hit_count + 1'), updated_at: Date.now() }, { where: { id } });
+        await Cars.update({
+            ai_harga_history: !isNaN(comparePrice) ? comparePrice : parseInt(comparePrice.replace(/\./g, "").trim(), 10),
+            ai_harga_bawah: harga_bawah,
+            ai_harga_atas: harga_atas,
+            hit_count: Sequelize.literal('hit_count + 1'), updated_at: Date.now()
+        }, { where: { id } });
         await scheduleLog.create({
             type: "Manual",
             date: setUTC7(new Date()),
