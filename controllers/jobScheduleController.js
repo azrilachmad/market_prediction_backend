@@ -9,7 +9,7 @@ const bcrypt = require('bcrypt');
 const { convDate } = require('../helper');
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
-const timezone = require ("dayjs/plugin/timezone");
+const timezone = require("dayjs/plugin/timezone");
 
 
 const generateToken = (payload) => {
@@ -118,7 +118,7 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
 
     const updateData = {};
     if (job_schedule) updateData.job_schedule = job_schedule;
-    if (time) updateData.time = dayjs.tz(time, "Asia/Jakarta").utc().format("YYYY-MM-DD HH:mm:ss")
+    if (time) updateData.time = dayjs.tz(time, "Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss");
     if (max_record) updateData.max_record = max_record;
 
     const [updatedRowsCount] = await jobSchedule.update(updateData, {
