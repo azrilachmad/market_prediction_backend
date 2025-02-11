@@ -10,6 +10,7 @@ const catchAsync = require('../utils/catchAsync.js');
 const { link } = require('fs');
 const dataSource = require('../db/sqModels/dataSource.js');
 const scheduleLog = require('../db/sqModels/scheduleLog.js');
+const vehicleSales = require('../model/vehicleSales.js');
 
 const fs = ('fs');
 const { ChartJSNodeCanvas } = ("chartjs-node-canvas");
@@ -262,11 +263,12 @@ const getChart = catchAsync(async (req, res) => {
 
 const updateVehicleData = catchAsync(async (req, res) => {
     try {
+        const { id, harga_bawah, harga_atas, total_token, desciption  } = req.body;
 
         const rawCompare = await vehicleSales.findAndCountAll({
             where: {
                 nama_mobil: {
-                    [Op.like]: `${data.ai_nama_mobil}%`
+                    [Op.like]: `%${desciption}%`
                 }
             },
             order: [
@@ -280,7 +282,6 @@ const updateVehicleData = catchAsync(async (req, res) => {
         if (compareSet.length > 0) { comparePrice = compareSet[0].selling }
 
 
-        const { id, harga_bawah, harga_atas, total_token } = req.body;
         await Cars.update({
             ai_harga_history: !isNaN(comparePrice) ? comparePrice : parseInt(comparePrice.replace(/\./g, "").trim(), 10),
             ai_harga_bawah: harga_bawah,
