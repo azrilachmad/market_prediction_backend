@@ -188,8 +188,8 @@ const editDataSource = catchAsync(async (req, res, next) => {
     // Use update method instead of save to ensure only existing users are updated
     const updateData = {};
 
-    if (parameter !== undefined) updateData.parameter = parameter;
-    if (table_column !== undefined) updateData.table_column = table_column;
+    if (marketplace_name !== undefined) updateData.marketplace_name = marketplace_name;
+    if (address !== undefined) updateData.address = address;
     if (status !== undefined) updateData.status = status; // Allow false and 0
 
 
