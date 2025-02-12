@@ -6,7 +6,7 @@ const router = express.Router()
 
 router.get('/api/data-source/', authentication, getAllDataSource)
 router.post('/api/data-source/create', authentication, createDataSource)
-router.post('/api/data-source/edit/:id', authentication, editDataSource)
+router.put('/api/data-source/edit/:id', authentication, editDataSource)
 router.post('/api/data-source/delete/:id', authentication, deleteDataSource)
 
 module.exports = router;
