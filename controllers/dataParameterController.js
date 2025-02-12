@@ -206,9 +206,10 @@ const editDataParameter = catchAsync(async (req, res, next) => {
     // Use update method instead of save to ensure only existing users are updated
     const updateData = {};
 
-    if (parameter) updateData.parameter = parameter;
-    if (table_column) updateData.table_column = table_column;
-    if (status) updateData.status = status
+    if (parameter !== undefined) updateData.parameter = parameter;
+    if (table_column !== undefined) updateData.table_column = table_column;
+    if (status !== undefined) updateData.status = status; // Allow false and 0
+
 
     const [updatedRowsCount] = await dataParameter.update(updateData, {
         where: { id: req.params.id },
