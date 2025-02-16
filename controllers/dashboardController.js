@@ -15,8 +15,15 @@ const generateToken = (payload) => {
 }
 
 const getAllVehicleCount = catchAsync(async (req, res) => {
+    const { startDate, endDate } = req.query
     try {
-        const vehicles = await Vehicle.count()
+        const vehicles = await Vehicle.count({
+            where: {
+                created_at: {
+                    [Op.between]: [new Date(startDate).setHours(0, 0, 0), new Date(endDate).setHours(23, 59, 59)] // Replace startDate and endDate with your actual values
+                }
+            }
+        })
         res.json({
             data: vehicles,
             error: false,
@@ -29,10 +36,14 @@ const getAllVehicleCount = catchAsync(async (req, res) => {
 })
 
 const getToBeProcessedData = catchAsync(async (req, res) => {
+    const { startDate, endDate } = req.query
     try {
         const vehicles = await Vehicle.count({
             where: {
-                hit_count: { [Op.eq]: 0 }, // Kondisi hit_count < 2
+                hit_count: { [Op.eq]: 0 }, // Kondisi hit_count < 2,
+                created_at: {
+                    [Op.between]: [new Date(startDate).setHours(0, 0, 0), new Date(endDate).setHours(23, 59, 59)] // Replace startDate and endDate with your actual values
+                }
             },
         })
         res.json({
@@ -47,10 +58,14 @@ const getToBeProcessedData = catchAsync(async (req, res) => {
 })
 
 const getProcessedData = catchAsync(async (req, res) => {
+    const { startDate, endDate } = req.query
     try {
         const vehicles = await Vehicle.count({
             where: {
                 hit_count: { [Op.gt]: 0 }, // Kondisi hit_count > 0
+                created_at: {
+                    [Op.between]: [new Date(startDate).setHours(0, 0, 0), new Date(endDate).setHours(23, 59, 59)] // Replace startDate and endDate with your actual values
+                }
             },
         })
         res.json({

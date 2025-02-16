@@ -150,8 +150,13 @@ const getVehicleList = catchAsync(async (req, res) => {
     try {
         const vehicles = await Cars.findAndCountAll({
             limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy ? sortBy : 'hit_count', order ? order : 'DESC']],
-            where: search
+            where: search && sortBy 
                 ? {
+                    [Op.or]: [
+                        {[sortBy]: { [Op.like]: `%${search}%` } },
+                    ],
+                }
+                : search ? {
                     [Op.or]: [
                         { ai_nama_mobil: { [Op.like]: `%${search}%` } },
                         { vehicle_transmission: { [Op.like]: `%${search}%` } },
@@ -162,8 +167,7 @@ const getVehicleList = catchAsync(async (req, res) => {
                         { ai_harga_atas: { [Op.like]: `%${search}%` } },
                         { ai_harga_bawah: { [Op.like]: `%${search}%` } },
                     ],
-                }
-                : {}, // Empty object if no query 
+                } : {}, // Empty object if no query 
         })
         res.json({
             data: vehicles.rows,
@@ -246,7 +250,7 @@ const getChart = catchAsync(async (req, res) => {
 
 const updateVehicleData = catchAsync(async (req, res) => {
     try {
-        const { id, harga_bawah, harga_atas, total_token, desciption  } = req.body;
+        const { id, harga_bawah, harga_atas, total_token, desciption } = req.body;
 
         const rawCompare = await vehicleSales.findAndCountAll({
             where: {
