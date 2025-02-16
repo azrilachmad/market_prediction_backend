@@ -11,6 +11,7 @@ const { link } = require('fs');
 const dataSource = require('../db/sqModels/dataSource.js');
 const scheduleLog = require('../db/sqModels/scheduleLog.js');
 const vehicleSales = require('../model/vehicleSales.js');
+const dayjs = require('dayjs');
 
 const fs = ('fs');
 const { ChartJSNodeCanvas } = ("chartjs-node-canvas");
@@ -250,7 +251,7 @@ const getChart = catchAsync(async (req, res) => {
 
 const updateVehicleData = catchAsync(async (req, res) => {
     try {
-        const { id, harga_bawah, harga_atas, total_token, desciption } = req.body;
+        const { id, harga_bawah, harga_atas, total_token, desciption, user, type } = req.body;
 
         const rawCompare = await vehicleSales.findAndCountAll({
             where: {
@@ -273,8 +274,11 @@ const updateVehicleData = catchAsync(async (req, res) => {
             ai_harga_history: !isNaN(comparePrice) ? comparePrice : parseInt(comparePrice.replace(/\./g, "").trim(), 10),
             ai_harga_bawah: harga_bawah,
             ai_harga_atas: harga_atas,
-            hit_count: Sequelize.literal('hit_count + 1'), updated_at: Date.now()
+            hit_count: Sequelize.literal('hit_count + 1'), 
+            updated_at: dayjs.tz(Date.now(), "Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss"),
+            checked_date: Date.now()
         }, { where: { id } });
+
         await scheduleLog.create({
             type: "Manual",
             date: setUTC7(new Date()),
@@ -282,6 +286,7 @@ const updateVehicleData = catchAsync(async (req, res) => {
             total_token: total_token,
             average_token: total_token / 1,
             duration: 2,
+            user: user,
             createdAt: new Date(),
             updatedAt: new Date(),
         });

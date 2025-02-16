@@ -6,6 +6,7 @@ const sequelize = require("../config/db.js");
 const { DataTypes, Op, Sequelize } = require("sequelize");
 const scheduleLog = require('../db/sqModels/scheduleLog.js');
 const jwt = require('jsonwebtoken');
+const dayjs = require('dayjs');
 
 
 const generateToken = (payload) => {
@@ -63,7 +64,7 @@ const getProcessedData = catchAsync(async (req, res) => {
         const vehicles = await Vehicle.count({
             where: {
                 hit_count: { [Op.gt]: 0 }, // Kondisi hit_count > 0
-                created_at: {
+                checked_date: {
                     [Op.between]: [new Date(startDate).setHours(0, 0, 0), new Date(endDate).setHours(23, 59, 59)] // Replace startDate and endDate with your actual values
                 }
             },

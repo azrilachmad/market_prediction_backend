@@ -129,6 +129,10 @@ const Cars = db.define('Cars', {
         type: DataTypes.INTEGER,
         underscored: true,
     },
+    checked_date: {
+        type: DataTypes.DATE,
+        underscored: true,
+    },
 }, {
     tableName: 'vehicle_price_check_ai',
     timestamps: true,
