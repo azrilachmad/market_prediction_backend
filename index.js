@@ -148,7 +148,7 @@ app.use(dashboardRoute);
                                 where: {
                                     nama_mobil: {
                                         [Op.like]: `${data.ai_nama_mobil}%`
-                                    } 
+                                    }
                                 },
                                 order: [
                                     [Sequelize.literal("STR_TO_DATE(tgl, '%d/%m/%Y')"), "desc"]
@@ -187,6 +187,8 @@ app.use(dashboardRoute);
                                     ai_harga_atas: !isNaN(resultData.harga_tertinggi) ? resultData.harga_tertinggi * 1 : 0,
                                     ai_harga_bawah: !isNaN(resultData.harga_terendah) ? resultData.harga_terendah * 1 : 0,
                                     hit_count: Sequelize.literal('hit_count + 1'),
+                                    updated_at: dayjs.tz(Date.now(), "Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss"),
+                                    checked_date: dayjs.tz(Date.now(), "Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss")
                                 },
                                 { where: { id: data.id } }
                             );
