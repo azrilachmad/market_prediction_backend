@@ -88,7 +88,7 @@ const getLogData = (async (req, res) => {
 
         const chart1Data = await scheduleLog.findAndCountAll({
             where: {
-                date: {
+                createdAt: {
                     [Op.between]: [new Date(startDate).setHours(0, 0, 0), new Date(endDate).setHours(23, 59, 59)] // Replace startDate and endDate with your actual values
                 }
             },
