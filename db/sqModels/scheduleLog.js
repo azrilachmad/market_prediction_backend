@@ -80,15 +80,7 @@ const scheduleLog = sequelize.define('scheduleLog', {
   },
   user: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    validate: {
-      notNull: {
-        msg: 'User cannot be null'
-      },
-      notEmpty: {
-        msg: 'User cannot be empty'
-      }
-    }
+    allowNull: true,
   },
   duration: {
     type: DataTypes.INTEGER,
