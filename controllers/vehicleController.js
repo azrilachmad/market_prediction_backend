@@ -151,10 +151,10 @@ const getVehicleList = catchAsync(async (req, res) => {
     try {
         const vehicles = await Cars.findAndCountAll({
             limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy ? sortBy : 'hit_count', order ? order : 'DESC']],
-            where: search && sortBy 
+            where: search && sortBy
                 ? {
                     [Op.or]: [
-                        {[sortBy]: { [Op.like]: `%${search}%` } },
+                        { [sortBy]: { [Op.like]: `%${search}%` } },
                     ],
                 }
                 : search ? {
@@ -253,15 +253,35 @@ const updateVehicleData = catchAsync(async (req, res) => {
     try {
         const { id, harga_bawah, harga_atas, total_token, desciption, user, type } = req.body;
 
-        const rawCompare = await vehicleSales.findAndCountAll({
+        const rawCompare = await VehicleSales.findAndCountAll({
             where: {
                 nama_mobil: {
-                    [Op.like]: `%${desciption}%`
-                }
+                    [Op.like]: `${data.ai_nama_mobil}%`,
+                },
+                grade: {
+                    [Op.not]: null,
+                },
             },
+            attributes: ["tgl", "nama_mobil", "grade", "selling"],
             order: [
-                [Sequelize.literal("STR_TO_DATE(tgl, '%d/%m/%Y')"), "desc"]
-            ]
+                [
+                    Sequelize.literal(
+                        `CASE 
+                            WHEN grade = 'A'  THEN 1  
+                            WHEN grade = 'A-' THEN 2  
+                            WHEN grade = 'B+' THEN 3  
+                            WHEN grade = 'B'  THEN 4  
+                            WHEN grade = 'B-' THEN 5  
+                            WHEN grade = 'C+' THEN 6  
+                            WHEN grade = 'C'  THEN 7  
+                            WHEN grade = 'C-' THEN 8  
+                            ELSE 9  
+                        END`
+                    ),
+                    "ASC",
+                ],
+                [Sequelize.fn("STR_TO_DATE", Sequelize.col("tgl"), "%d/%m/%Y"), "DESC"],
+            ],
         });
         let compareSet = rawCompare.rows.map((item) => item.dataValues);
 
@@ -274,7 +294,7 @@ const updateVehicleData = catchAsync(async (req, res) => {
             ai_harga_history: !isNaN(comparePrice) ? comparePrice : parseInt(comparePrice.replace(/\./g, "").trim(), 10),
             ai_harga_bawah: harga_bawah,
             ai_harga_atas: harga_atas,
-            hit_count: Sequelize.literal('hit_count + 1'), 
+            hit_count: Sequelize.literal('hit_count + 1'),
             updated_at: dayjs.tz(Date.now(), "Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss"),
             checked_date: Date.now()
         }, { where: { id } });

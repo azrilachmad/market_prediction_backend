@@ -144,16 +144,37 @@ app.use(dashboardRoute);
                         for (const data of dataSet) {
 
                             // Proses Compare Price Check 
-                            const rawCompare = await vehicleSales.findAndCountAll({
+                            const rawCompare = await VehicleSales.findAndCountAll({
                                 where: {
                                     nama_mobil: {
-                                        [Op.like]: `${data.ai_nama_mobil}%`
-                                    }
+                                        [Op.like]: `${data.ai_nama_mobil}%`,
+                                    },
+                                    grade: {
+                                        [Op.not]: null,
+                                    },
                                 },
+                                attributes: ["tgl", "nama_mobil", "grade", "selling"],
                                 order: [
-                                    [Sequelize.literal("STR_TO_DATE(tgl, '%d/%m/%Y')"), "desc"]
-                                ]
+                                    [
+                                        Sequelize.literal(
+                                            `CASE 
+                                                WHEN grade = 'A'  THEN 1  
+                                                WHEN grade = 'A-' THEN 2  
+                                                WHEN grade = 'B+' THEN 3  
+                                                WHEN grade = 'B'  THEN 4  
+                                                WHEN grade = 'B-' THEN 5  
+                                                WHEN grade = 'C+' THEN 6  
+                                                WHEN grade = 'C'  THEN 7  
+                                                WHEN grade = 'C-' THEN 8  
+                                                ELSE 9  
+                                            END`
+                                        ),
+                                        "ASC",
+                                    ],
+                                    [Sequelize.fn("STR_TO_DATE", Sequelize.col("tgl"), "%d/%m/%Y"), "DESC"],
+                                ],
                             });
+
                             let compareSet = rawCompare.rows.map((item) => item.dataValues);
                             // console.log("AI Nama Mobil:" + data.ai_nama_mobil)
                             // console.log("Compare nama mobil: " + compareSet[0]?.nama_mobil);
