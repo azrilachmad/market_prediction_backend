@@ -253,7 +253,7 @@ const updateVehicleData = catchAsync(async (req, res) => {
     try {
         const { id, harga_bawah, harga_atas, total_token, desciption, user, type } = req.body;
 
-        const rawCompare = await VehicleSales.findAndCountAll({
+        const rawCompare = await vehicleSales.findAndCountAll({
             where: {
                 nama_mobil: {
                     [Op.like]: `${data.ai_nama_mobil}%`,

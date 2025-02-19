@@ -144,7 +144,7 @@ app.use(dashboardRoute);
                         for (const data of dataSet) {
 
                             // Proses Compare Price Check 
-                            const rawCompare = await VehicleSales.findAndCountAll({
+                            const rawCompare = await vehicleSales.findAndCountAll({
                                 where: {
                                     nama_mobil: {
                                         [Op.like]: `${data.ai_nama_mobil}%`,
@@ -153,7 +153,6 @@ app.use(dashboardRoute);
                                         [Op.not]: null,
                                     },
                                 },
-                                attributes: ["tgl", "nama_mobil", "grade", "selling"],
                                 order: [
                                     [
                                         Sequelize.literal(
