@@ -256,7 +256,7 @@ const updateVehicleData = catchAsync(async (req, res) => {
         const rawCompare = await vehicleSales.findAndCountAll({
             where: {
                 nama_mobil: {
-                    [Op.like]: `${data.ai_nama_mobil}%`,
+                    [Op.like]: `%${desciption}%`
                 },
                 grade: {
                     [Op.not]: null,
