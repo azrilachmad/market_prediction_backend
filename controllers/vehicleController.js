@@ -47,12 +47,51 @@ const createSinglePredict = catchAsync(async (req, res) => {
         const promptResult = await model.generateContent(marketPredictionPrompt);
         totalToken += promptResult.response.usageMetadata.totalTokenCount * 1;
 
+        const rawCompare = await vehicleSales.findAndCountAll({
+            where: {
+                nama_mobil: {
+                    [Op.like]: `%${nama_kendaraan}%`
+                },
+                grade: {
+                    [Op.not]: null,
+                },
+            },
+            attributes: ["tgl", "nama_mobil", "grade", "selling"],
+            order: [
+                [
+                    Sequelize.literal(
+                        `CASE 
+                            WHEN grade = 'A'  THEN 1  
+                            WHEN grade = 'A-' THEN 2  
+                            WHEN grade = 'B+' THEN 3  
+                            WHEN grade = 'B'  THEN 4  
+                            WHEN grade = 'B-' THEN 5  
+                            WHEN grade = 'C+' THEN 6  
+                            WHEN grade = 'C'  THEN 7  
+                            WHEN grade = 'C-' THEN 8  
+                            ELSE 9  
+                        END`
+                    ),
+                    "ASC",
+                ],
+                [Sequelize.fn("STR_TO_DATE", Sequelize.col("tgl"), "%d/%m/%Y"), "DESC"],
+            ],
+        });
+
+        let compareSet = rawCompare.rows.map((item) => item.dataValues);
+
+        let comparePrice = 0;
+
+        if (compareSet.length > 0) { comparePrice = compareSet[0].selling }
+
+
         const resultData = JSON.parse(promptResult.response.text());
         const responseData = {
             data: {
                 nama_kendaraan: nama_kendaraan,
                 harga_terendah: resultData.harga_terendah,
                 harga_tertinggi: resultData.harga_tertinggi,
+                harga_history: !isNaN(comparePrice) ? comparePrice : parseInt(comparePrice.replace(/\./g, "").trim(), 10),
                 link_referensi: sourceSet,
                 total_token: totalToken
             },
@@ -150,7 +189,7 @@ const getVehicleList = catchAsync(async (req, res) => {
 
     try {
         const vehicles = await Cars.findAndCountAll({
-            limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy ? sortBy : 'hit_count', order ? order : 'DESC']],
+            limit: limitAsNumber, offset: page === 1 ? 0 : (pageAsNumber - 1) * limitAsNumber, order: [[sortBy ? sortBy : 'checked_date', order ? order : 'DESC']],
             where: search && sortBy
                 ? {
                     [Op.or]: [
