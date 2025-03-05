@@ -43,7 +43,25 @@ const createSinglePredict = catchAsync(async (req, res) => {
 
         let totalToken = 0;
 
-        const marketPredictionPrompt = `Berikan Harga Atas dan Harga Bawah dengan mengabaikan data outlier ${jenis_kendaraan} Bekas ${nama_kendaraan}, Tahun kendaraan ${tahun_kendaraan}, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar}, wilayah kendaraan ${wilayah_kendaraan}. Gunakan metode Interquartile Range (IQR) untuk mendeteksi dan menghapus outlier, lalu tentukan harga atas dan harga bawah berdasarkan data yang telah dibersihkan dan berdasarkan data terbaru atau hari ini pada referensi yang disertakan. berikut juga bisa menjadi referensi sumber: ${referenceLinks} \n. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
+        const marketPredictionPrompt = `Tentukan harga terendah dan tertinggi mobil bekas untuk ${jenis_kendaraan} ${nama_kendaraan}, Tahun ${tahun_kendaraan}, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar} di wilayah ${wilayah_kendaraan} dengan ketentuan sebagai berikut:\n
+        1. Data yang digunakan\n
+        - Sumber utama: Data terbaru dari ${sourceSet.length > 0 ? referenceLinks : '-'} (periksa listing hari ini).\n
+        - Parameter pencarian: Model "${nama_kendaraan}", Tahun "${tahun_kendaraan}", Bahan Bakar "${bahan_bakar}", Wilayah "${wilayah_kendaraan}" \n
+        - Transmisi diabaikan (termasuk semua tipe transmisi).\n
+        
+        2. Proses Analisis:\n
+        a. Kumpulkan semua harga yang memenuhi kriteria di atas.\n
+        b. Hitung 'Interquartile Range (IQR)':\n
+        - Urutkan data harga.\n
+        - Tentukan Q1 (Kuartil pertama) dan Q3 (Kuartil ketika).\n
+        - Hitung IQR = Q3 - Q1.\n
+        - Tentukan batas bawah (Q1 - 1.5xIQR) dan batas atas (Q3 + 1.5xIQR).\n
+        c. Hapus outlier (data di luar batas bawah/atas)\n
+        d. Dari data yang telah dibersihkan, tentukan *harga terendah* (minimum) dan *harga tertinggi* (maksimum).\n
+
+        3. Output:
+        - Format JSON: {"harga_terendah": nilai, "harga_tertinggi": nilai} (tanpa penjelasan tambahan).
+        `;
         const promptResult = await model.generateContent(marketPredictionPrompt);
         totalToken += promptResult.response.usageMetadata.totalTokenCount * 1;
 
