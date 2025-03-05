@@ -189,7 +189,7 @@ app.use(dashboardRoute);
                             const referenceLinks = sourceSet.map((link) => `- ${link}`).join(", ");
 
                             // Define Prompt
-                            const prompt = `Berikan Harga Atas dan Harga Bawah dengan mengabaikan data outlier untuk ${parameterString}. Gunakan metode Interquartile Range (IQR) untuk mendeteksi dan menghapus outlier, lalu tentukan harga atas dan harga bawah berdasarkan data yang telah dibersihkan. berikut juga bisa menjadi referensi sumber: ${sourceSet.length > 0 ? referenceLinks : '-'} \n. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
+                            const prompt = `Berikan Harga Atas dan Harga Bawah dengan mengabaikan data outlier untuk ${parameterString}. Gunakan metode Interquartile Range (IQR) untuk mendeteksi dan menghapus outlier, lalu tentukan harga atas dan harga bawah berdasarkan data yang telah dibersihkan dan berdasarkan data terbaru atau hari ini pada referensi yang disertakan. berikut juga bisa menjadi referensi sumber: ${sourceSet.length > 0 ? referenceLinks : '-'} \n. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
 
                             // Prompt Process (Gemini Generative AI)
                             const promptResult = await model.generateContent(prompt);
