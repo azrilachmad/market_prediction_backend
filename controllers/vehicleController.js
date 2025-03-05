@@ -81,8 +81,10 @@ const createSinglePredict = catchAsync(async (req, res) => {
         let compareSet = rawCompare.rows.map((item) => item.dataValues);
 
         let comparePrice = 0;
+        let compareDate = null;
 
         if (compareSet.length > 0) { comparePrice = compareSet[0].selling }
+        if (compareSet.length > 0) { compareDate = compareSet[0].tgl }
 
 
         const resultData = JSON.parse(promptResult.response.text());
@@ -91,6 +93,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
                 nama_kendaraan: nama_kendaraan,
                 harga_terendah: resultData.harga_terendah,
                 harga_tertinggi: resultData.harga_tertinggi,
+                harga_history_date: compareDate,
                 harga_history: !isNaN(comparePrice) ? comparePrice : parseInt(comparePrice.replace(/\./g, "").trim(), 10),
                 link_referensi: sourceSet,
                 total_token: totalToken
@@ -325,11 +328,15 @@ const updateVehicleData = catchAsync(async (req, res) => {
         let compareSet = rawCompare.rows.map((item) => item.dataValues);
 
         let comparePrice = 0;
+        let compareDate = null;
+
 
         if (compareSet.length > 0) { comparePrice = compareSet[0].selling }
+        if (compareSet.length > 0) { compareDate = compareSet[0].tgl }
 
 
         await Cars.update({
+            harga_history_date: compareDate,
             ai_harga_history: !isNaN(comparePrice) ? comparePrice : parseInt(comparePrice.replace(/\./g, "").trim(), 10),
             ai_harga_bawah: harga_bawah,
             ai_harga_atas: harga_atas,

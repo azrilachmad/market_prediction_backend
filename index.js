@@ -198,11 +198,16 @@ app.use(dashboardRoute);
                             console.log(`Harga Terendah: ${resultData.harga_terendah}, Harga Tertinggi: ${resultData.harga_tertinggi}`)
 
                             let comparePrice = 0;
+                            let compareDate = null;
+
 
                             if (compareSet.length > 0) { comparePrice = compareSet[0].selling }
+                            if (compareSet.length > 0) { compareDate = compareSet[0].tgl }
+
 
                             await Cars.update(
                                 {
+                                    harga_history_date: compareDate,
                                     ai_harga_history: !isNaN(comparePrice) ? comparePrice : parseInt(comparePrice.replace(/\./g, "").trim(), 10),
                                     ai_harga_atas: !isNaN(resultData.harga_tertinggi) ? resultData.harga_tertinggi * 1 : 0,
                                     ai_harga_bawah: !isNaN(resultData.harga_terendah) ? resultData.harga_terendah * 1 : 0,
