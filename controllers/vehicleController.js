@@ -18,7 +18,7 @@ const { ChartJSNodeCanvas } = ("chartjs-node-canvas");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-1.5-pro",
     generationConfig: { "response_mime_type": "application/json" },
 });
 
@@ -43,7 +43,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
 
         let totalToken = 0;
 
-        const marketPredictionPrompt = `Berikan Harga Atas dan Harga Bawah dengan mengabaikan data outlier ${jenis_kendaraan} Bekas ${nama_kendaraan}, Tahun kendaraan ${tahun_kendaraan}, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar}, wilayah kendaraan ${wilayah_kendaraan}. Gunakan metode Interquartile Range (IQR) untuk mendeteksi dan menghapus outlier, lalu tentukan harga atas dan harga bawah berdasarkan data yang telah dibersihkan. berikut juga bisa menjadi referensi sumber: ${referenceLinks} \n. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
+        const marketPredictionPrompt = `Berikan Harga Atas dan Harga Bawah dengan mengabaikan data outlier ${jenis_kendaraan} Bekas ${nama_kendaraan}, Tahun kendaraan ${tahun_kendaraan}, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar}, wilayah kendaraan ${wilayah_kendaraan}. Gunakan metode Interquartile Range (IQR) untuk mendeteksi dan menghapus outlier, lalu tentukan harga atas dan harga bawah berdasarkan data yang telah dibersihkan dan berdasarkan data terbaru atau hari ini pada referensi yang disertakan. berikut juga bisa menjadi referensi sumber: ${referenceLinks} \n. pastikan output harus sesuai dengan format json sebagai berikut: {"harga_terendah": Harga Terendah, "harga_tertinggi": Harga Tertinggi}.`;
         const promptResult = await model.generateContent(marketPredictionPrompt);
         totalToken += promptResult.response.usageMetadata.totalTokenCount * 1;
 
