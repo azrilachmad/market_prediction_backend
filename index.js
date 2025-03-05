@@ -25,7 +25,10 @@ const timezone = require('dayjs/plugin/timezone');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
     model: "gemini-1.5-pro",
-    generationConfig: { "response_mime_type": "application/json" },
+    generationConfig: { 
+        "response_mime_type": "application/json",
+        "temperature": 2, 
+    }
 });
 
 

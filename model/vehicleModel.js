@@ -113,6 +113,10 @@ const Cars = db.define('Cars', {
         type: DataTypes.STRING,
         underscored: true,
     },
+    harga_history_date: {
+        type: DataTypes.STRING,
+        underscored: true,
+    },
     ai_harga_history: {
         type: DataTypes.INTEGER,
         underscored: true,

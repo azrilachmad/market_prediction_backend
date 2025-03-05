@@ -1,5 +1,5 @@
 require('dotenv').config()
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { DynamicRetrievalMode, GoogleGenerativeAI } = require("@google/generative-ai");
 const Vehicle = require("../model/vehicleModel.js");
 const { DataTypes, Op, Sequelize } = require("sequelize");
 const Cars = require("../model/vehicleModel.js");
@@ -19,7 +19,10 @@ const { ChartJSNodeCanvas } = ("chartjs-node-canvas");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
     model: "gemini-1.5-pro",
-    generationConfig: { "response_mime_type": "application/json" },
+    generationConfig: { 
+        "response_mime_type": "application/json",
+        "temperature": 2, 
+    }
 });
 
 const createSinglePredict = catchAsync(async (req, res) => {
