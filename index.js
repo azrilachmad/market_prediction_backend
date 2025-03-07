@@ -15,21 +15,24 @@ const scheduleLog = require('./db/sqModels/scheduleLog.js')
 const { convDate, msToHHMMSS, setUTC7 } = require('./helper/index.js')
 const Cars = require('./model/vehicleModel.js');
 const dataParameter = require('./db/sqModels/dataParameter.js');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenerativeAI, DynamicRetrievalMode } = require('@google/generative-ai');
 const dataSource = require('./db/sqModels/dataSource.js');
 const { Op, Sequelize } = require('sequelize');
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
 const timezone = require('dayjs/plugin/timezone');
 
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-pro",
-    generationConfig: { 
-        "response_mime_type": "application/json",
-        "temperature": 2, 
-    }
-});
+const model = genAI.getGenerativeModel(
+    {
+        model: "models/gemini-2.0-flash",
+        generationConfig: {
+            "responseMimeType": "application/json",
+            "temperature": 2,
+        },
+    },
+);
 
 
 // Define every route
@@ -210,6 +213,10 @@ app.use(dashboardRoute);
 
                             3. Output:\n
                             - Format JSON: {"harga_terendah": nilai, "harga_tertinggi": nilai} (tanpa penjelasan tambahan).
+
+                            4. Tambahan:\n
+                            - Harga kendaraan didapatkan berdasarkan iklan yang tertera sesuai link referensi\n
+                            - Hindari mengambil harga dari sumber selain iklan seperti artikel, berita, atau bulletin, pada link referensi \n
                             `;
 
                             // Prompt Process (Gemini Generative AI)

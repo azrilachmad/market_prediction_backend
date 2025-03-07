@@ -1,5 +1,5 @@
 require('dotenv').config()
-const { DynamicRetrievalMode, GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenerativeAI, DynamicRetrievalMode } = require("@google/generative-ai");
 const Vehicle = require("../model/vehicleModel.js");
 const { DataTypes, Op, Sequelize } = require("sequelize");
 const Cars = require("../model/vehicleModel.js");
@@ -17,13 +17,15 @@ const fs = ('fs');
 const { ChartJSNodeCanvas } = ("chartjs-node-canvas");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-pro",
-    generationConfig: { 
-        "response_mime_type": "application/json",
-        "temperature": 2, 
-    }
-});
+const model = genAI.getGenerativeModel(
+    {
+        model: "models/gemini-2.0-flash",
+        generationConfig: {
+            "responseMimeType": "application/json",
+            "temperature": 2,
+        },
+    },
+);
 
 const createSinglePredict = catchAsync(async (req, res) => {
 
@@ -46,7 +48,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
 
         let totalToken = 0;
 
-        const marketPredictionPrompt = `Tentukan harga terendah dan tertinggi mobil bekas untuk ${jenis_kendaraan} ${nama_kendaraan}, Tahun ${tahun_kendaraan}, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar} di wilayah ${wilayah_kendaraan} dengan ketentuan sebagai berikut:\n
+        const prompt = `Tentukan harga terendah dan tertinggi mobil bekas untuk ${jenis_kendaraan} ${nama_kendaraan}, Tahun ${tahun_kendaraan}, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar} di wilayah ${wilayah_kendaraan} dengan ketentuan sebagai berikut:\n
         1. Data yang digunakan\n
         - Sumber utama: Data terbaru dari ${sourceSet.length > 0 ? referenceLinks : '-'} (periksa listing hari ini).\n
         - Parameter pencarian: Model "${nama_kendaraan}", Tahun "${tahun_kendaraan}", Bahan Bakar "${bahan_bakar}", Wilayah "${wilayah_kendaraan}" \n
@@ -62,11 +64,16 @@ const createSinglePredict = catchAsync(async (req, res) => {
         c. Hapus outlier (data di luar batas bawah/atas)\n
         d. Dari data yang telah dibersihkan, tentukan *harga terendah* (minimum) dan *harga tertinggi* (maksimum).\n
 
-        3. Output:
+        3. Output:\n
         - Format JSON: {"harga_terendah": nilai, "harga_tertinggi": nilai} (tanpa penjelasan tambahan).
+
+        4. Tambahan:\n
+        - Harga kendaraan didapatkan berdasarkan iklan yang tertera sesuai link referensi\n
+        - Hindari mengambil harga dari sumber selain iklan seperti artikel, berita, atau bulletin, pada link referensi \n
         `;
-        const promptResult = await model.generateContent(marketPredictionPrompt);
-        totalToken += promptResult.response.usageMetadata.totalTokenCount * 1;
+        const result = await model.generateContent(prompt);
+        totalToken += result.response.usageMetadata.totalTokenCount * 1;
+        // totalToken += 0;
 
         const rawCompare = await vehicleSales.findAndCountAll({
             where: {
@@ -108,7 +115,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
         if (compareSet.length > 0) { compareDate = compareSet[0].tgl }
 
 
-        const resultData = JSON.parse(promptResult.response.text());
+        const resultData = JSON.parse(result.response.text())
         const responseData = {
             data: {
                 nama_kendaraan: nama_kendaraan,
@@ -227,7 +234,7 @@ const getVehicleList = catchAsync(async (req, res) => {
                         { tahun: { [Op.like]: `%${search}%` } },
                         { kota: { [Op.like]: `%${search}%` } },
                         { provinsi: { [Op.like]: `%${search}%` } },
-                        { harga_history: { [Op.like]: `%${search}%` } },
+                        { ai_harga_history: { [Op.like]: `%${search}%` } },
                         { ai_harga_atas: { [Op.like]: `%${search}%` } },
                         { ai_harga_bawah: { [Op.like]: `%${search}%` } },
                     ],
