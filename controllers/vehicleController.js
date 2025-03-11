@@ -92,10 +92,21 @@ const createSinglePredict = catchAsync(async (req, res) => {
         totalToken += result.response.usageMetadata.totalTokenCount * 1;
         // totalToken += 0;
 
+        let kota =  wilayah_kendaraan
+        // kota.split(",")[0].trim();
+        // kota.replace('kota', '')
+        // kota.replace('kabupaten', '')
+
         const rawCompare = await vehicleSales.findAndCountAll({
             where: {
                 nama_mobil: {
                     [Op.like]: `%${nama_kendaraan}%`
+                },
+                year2: {
+                    [Op.like]: `%${tahun_kendaraan}%`
+                },
+                kota: {
+                    [Op.like]: `%${kota}%`
                 },
                 grade: {
                     [Op.not]: null,

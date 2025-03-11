@@ -165,6 +165,15 @@ app.use(dashboardRoute);
                                     nama_mobil: {
                                         [Op.like]: `${data.ai_nama_mobil}%`,
                                     },
+                                    year2: {
+                                        [Op.like]: `%${data.tahun}%`
+                                    },
+                                    provinsi_lokasi_unit: {
+                                        [Op.like]: `%${data.provinsi}%`
+                                    },
+                                    kota: {
+                                        [Op.like]: `%${data.kota}%`
+                                    },
                                     grade: {
                                         [Op.not]: null,
                                     },
