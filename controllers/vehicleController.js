@@ -62,7 +62,6 @@ const createSinglePredict = catchAsync(async (req, res) => {
         - Tentukan batas bawah (Q1 - 1.5xIQR) dan batas atas (Q3 + 1.5xIQR).\n
         b. Hapus outlier (data di luar batas bawah/atas)\n
         d. Dari data yang telah dibersihkan, tentukan *harga terendah* (minimum) dan *harga tertinggi* (maksimum).\n
-        e. Ambil data harga dari list iklan yang ada (kendaraan, tahun, transmisi, kota, dsb) guna memastikan keakurasian data.\n
 
         3. Output:\n
         - Format JSON: {"harga_terendah": nilai, "harga_tertinggi": nilai} (tanpa penjelasan tambahan).
@@ -71,6 +70,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
         - Harga kendaraan didapatkan berdasarkan iklan yang tertera sesuai link referensi\n
         - Hindari mengambil harga dari sumber selain iklan seperti artikel, berita, atau bulletin, pada link referensi \n
         - Hindari mengambil data dari iklan yang sudah tidak ada atau sudah terjual
+        - Ambil Data harga dengan jarak paling lama 1 bulan terakhir dari hari ini.
         `;
         const result = await model.generateContent(prompt);
         totalToken += result.response.usageMetadata.totalTokenCount * 1;
