@@ -55,15 +55,14 @@ const createSinglePredict = catchAsync(async (req, res) => {
         - Transmisi diabaikan (termasuk semua tipe transmisi).\n
         
         2. Proses Analisis:\n
-        a. Kumpulkan semua harga yang memenuhi kriteria di atas.\n
-        b. Hitung 'Interquartile Range (IQR)':\n
+        a. Hitung 'Interquartile Range (IQR)':\n
         - Urutkan data harga.\n
         - Tentukan Q1 (Kuartil pertama) dan Q3 (Kuartil ketika).\n
         - Hitung IQR = Q3 - Q1.\n
         - Tentukan batas bawah (Q1 - 1.5xIQR) dan batas atas (Q3 + 1.5xIQR).\n
-        c. Hapus outlier (data di luar batas bawah/atas)\n
+        b. Hapus outlier (data di luar batas bawah/atas)\n
         d. Dari data yang telah dibersihkan, tentukan *harga terendah* (minimum) dan *harga tertinggi* (maksimum).\n
-        e. Ambil data harga dari list iklan yang ada (kendaraan, tahun, transmisi, kota, dsb) seakurat mungkin.\n
+        e. Ambil data harga dari list iklan yang ada (kendaraan, tahun, transmisi, kota, dsb) guna memastikan keakurasian data.\n
 
         3. Output:\n
         - Format JSON: {"harga_terendah": nilai, "harga_tertinggi": nilai} (tanpa penjelasan tambahan).
@@ -71,6 +70,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
         4. Tambahan:\n
         - Harga kendaraan didapatkan berdasarkan iklan yang tertera sesuai link referensi\n
         - Hindari mengambil harga dari sumber selain iklan seperti artikel, berita, atau bulletin, pada link referensi \n
+        - Hindari mengambil data dari iklan yang sudah tidak ada atau sudah terjual
         `;
         const result = await model.generateContent(prompt);
         totalToken += result.response.usageMetadata.totalTokenCount * 1;
