@@ -63,6 +63,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
         - Tentukan batas bawah (Q1 - 1.5xIQR) dan batas atas (Q3 + 1.5xIQR).\n
         c. Hapus outlier (data di luar batas bawah/atas)\n
         d. Dari data yang telah dibersihkan, tentukan *harga terendah* (minimum) dan *harga tertinggi* (maksimum).\n
+        e. Ambil data harga dari list iklan yang ada (kendaraan, tahun, transmisi, kota, dsb) seakurat mungkin.\n
 
         3. Output:\n
         - Format JSON: {"harga_terendah": nilai, "harga_tertinggi": nilai} (tanpa penjelasan tambahan).
