@@ -50,7 +50,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
 
         const prompt = `Tentukan harga terendah dan tertinggi mobil bekas untuk ${jenis_kendaraan} ${nama_kendaraan}, Tahun ${tahun_kendaraan}, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar} di wilayah ${wilayah_kendaraan} dengan ketentuan sebagai berikut:\n
         1. Data yang digunakan\n
-        - Sumber utama: Data terbaru dari ${sourceSet.length > 0 ? referenceLinks : '-'} (periksa listing hari ini).\n
+        - Sumber utama: Data terbaru dari ${sourceSet.length > 0 ? referenceLinks : '-'} (periksa listing hari ini sampai 1 bulan terakhir).\n
         - Parameter pencarian: Model "${nama_kendaraan}", Tahun "${tahun_kendaraan}", Bahan Bakar "${bahan_bakar}", Wilayah "${wilayah_kendaraan}" \n
         - Transmisi diabaikan (termasuk semua tipe transmisi).\n
         
