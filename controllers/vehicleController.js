@@ -17,15 +17,26 @@ const fs = ('fs');
 const { ChartJSNodeCanvas } = ("chartjs-node-canvas");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel(
-    {
-        model: "models/gemini-2.0-flash",
-        generationConfig: {
-            "responseMimeType": "application/json",
-            "temperature": 2,
+const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-pro",
+    tools: [{
+        google_search_retrieval: {
+            dynamic_retrieval_config: {
+                mode: "MODE_DYNAMIC",
+                dynamic_threshold: 0.42,
+            },
         },
-    },
-);
+    },],
+});
+
+const generationConfig = {
+    temperature: 1,
+    topP: 0.95,
+    topK: 40,
+    maxOutputTokens: 8192,
+    responseMimeType: "text/plain",
+};
+
 
 const createSinglePredict = catchAsync(async (req, res) => {
 
@@ -41,6 +52,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
 
 
     try {
+
         const dataSourceData = await dataSource.findAndCountAll({ where: { status: true } });
         let sourceSet = dataSourceData.rows.map((item) => item.dataValues.address);
         const referenceLinks = sourceSet.map((link) => `- ${link}`).join(", ");
@@ -48,31 +60,35 @@ const createSinglePredict = catchAsync(async (req, res) => {
 
         let totalToken = 0;
 
-        const prompt = `Tentukan harga terendah dan tertinggi mobil bekas untuk ${jenis_kendaraan} ${nama_kendaraan}, Tahun ${tahun_kendaraan}, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar} di wilayah ${wilayah_kendaraan} dengan ketentuan sebagai berikut:\n
+        const prompt = `Tentukan harga terendah dan tertinggi sebuah Kendaraan untuk ${jenis_kendaraan} ${nama_kendaraan}, Tahun ${tahun_kendaraan}, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar} di wilayah ${wilayah_kendaraan} dengan ketentuan sebagai berikut:\n
         1. Data yang digunakan\n
-        - Sumber utama: Data terbaru dari ${sourceSet.length > 0 ? referenceLinks : '-'} (periksa listing hari ini sampai 1 bulan terakhir).\n
+        - Sumber utama: Data terbaru dari ${sourceSet.length > 0 ? referenceLinks : '-'} (periksa listing hari ini).\n
         - Parameter pencarian: Model "${nama_kendaraan}", Tahun "${tahun_kendaraan}", Bahan Bakar "${bahan_bakar}", Wilayah "${wilayah_kendaraan}" \n
         - Transmisi diabaikan (termasuk semua tipe transmisi).\n
-        
-        2. Proses Analisis:\n
-        a. Hitung 'Interquartile Range (IQR)':\n
-        - Urutkan data harga.\n
-        - Tentukan Q1 (Kuartil pertama) dan Q3 (Kuartil ketika).\n
-        - Hitung IQR = Q3 - Q1.\n
-        - Tentukan batas bawah (Q1 - 1.5xIQR) dan batas atas (Q3 + 1.5xIQR).\n
-        b. Hapus outlier (data di luar batas bawah/atas)\n
-        d. Dari data yang telah dibersihkan, tentukan *harga terendah* (minimum) dan *harga tertinggi* (maksimum).\n
 
+        2. Proses Analisa: \n
+        - Hitung 'Interquartile Range (IQR)':\n
+        - Hapus outlier (data di luar batas bawah/atas atau harga tidak wajar)\n
+        - Dari data yang telah dibersihkan, tentukan harga terendah (minimum) dan harga tertinggi (maksimum).
+        
         3. Output:\n
-        - Format JSON: {"harga_terendah": nilai, "harga_tertinggi": nilai} (tanpa penjelasan tambahan).
+        - Tidak perlu ada penjelasan, hanya tampilkan json saja\n
+        - Format JSON: {"harga_terendah": harga_terendah, "harga_tertinggi": harga_tertinggi} (tanpa penjelasan tambahan).\n
+        - Tidak perlu ada "'''json'''"
 
         4. Tambahan:\n
-        - Harga kendaraan didapatkan berdasarkan iklan yang tertera sesuai link referensi\n
-        - Hindari mengambil harga dari sumber selain iklan seperti artikel, berita, atau bulletin, pada link referensi \n
-        - Hindari mengambil data dari iklan yang sudah tidak ada atau sudah terjual
-        - Ambil Data harga dengan jarak paling lama 1 bulan terakhir dari hari ini.
+        - Harga kendaraan hanya boleh didapatkan berdasarkan iklan yang tertera sesuai link referensi\n
+        - Tidak boleh mengambil harga dari sumber selain iklan seperti artikel, berita, atau bulletin, pada link referensi \n
         `;
-        const result = await model.generateContent(prompt);
+
+        const chatSession = model.startChat({
+            generationConfig,
+            history: [
+            ],
+        });
+
+        // const result = await model.generateContent(prompt);
+        const result = await chatSession.sendMessage(prompt);
         totalToken += result.response.usageMetadata.totalTokenCount * 1;
         // totalToken += 0;
 
@@ -116,7 +132,10 @@ const createSinglePredict = catchAsync(async (req, res) => {
         if (compareSet.length > 0) { compareDate = compareSet[0].tgl }
 
 
-        const resultData = JSON.parse(result.response.text())
+        let jsonString = result.response.text().replace(/```json|```/g, "").trim(); 
+        const resultData = JSON.parse(jsonString)
+        console.log(comparePrice)
+        console.log(resultData)
         const responseData = {
             data: {
                 nama_kendaraan: nama_kendaraan,
@@ -132,9 +151,9 @@ const createSinglePredict = catchAsync(async (req, res) => {
         }
         res.status(200).send(responseData)
     } catch (error) {
-        return res.status(400).send({
-            message: 'An error occured!'
-        });
+        console.error("Error parsing JSON:", error);
+        return res.status(400).send({ message: 'An error occurred!', error: error.message });
+
     }
 
 })

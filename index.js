@@ -24,15 +24,25 @@ const timezone = require('dayjs/plugin/timezone');
 
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel(
-    {
-        model: "models/gemini-2.0-flash",
-        generationConfig: {
-            "responseMimeType": "application/json",
-            "temperature": 2,
+const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-pro",
+    tools: [{
+        google_search_retrieval: {
+            dynamic_retrieval_config: {
+                mode: "MODE_DYNAMIC",
+                dynamic_threshold: 0.42,
+            },
         },
-    },
-);
+    },],
+});
+
+const generationConfig = {
+    temperature: 1,
+    topP: 0.95,
+    topK: 40,
+    maxOutputTokens: 8192,
+    responseMimeType: "text/plain",
+};
 
 
 // Define every route
@@ -195,35 +205,37 @@ app.use(dashboardRoute);
                             const referenceLinks = sourceSet.map((link) => `- ${link}`).join(", ");
 
                             // Define Prompt
-                            const prompt = `Tentukan harga terendah dan tertinggi mobil bekas untuk ${parameterString} dengan ketentuan sebagai berikut:\n
+                            const prompt = `Tentukan harga terendah dan tertinggi kendaraan bekas untuk ${parameterString} dengan ketentuan sebagai berikut:\n
                             1. Data yang digunakan\n
                             - Sumber utama: Data terbaru dari ${sourceSet.length > 0 ? referenceLinks : '-'} (periksa listing hari ini).\n
                             - Parameter pencarian: ${parameterString}\n
                             - Transmisi diabaikan (termasuk semua tipe transmisi).\n
 
-                            2. Proses Analisis:\n
-                            a. Kumpulkan semua harga yang memenuhi kriteria di atas.\n
-                            b. Hitung 'Interquartile Range (IQR)':\n
-                            - Urutkan data harga.\n
-                            - Tentukan Q1 (Kuartil pertama) dan Q3 (Kuartil ketika).\n
-                            - Hitung IQR = Q3 - Q1.\n
-                            - Tentukan batas bawah (Q1 - 1.5xIQR) dan batas atas (Q3 + 1.5xIQR).\n
-                            c. Hapus outlier (data di luar batas bawah/atas)\n
-                            d. Dari data yang telah dibersihkan, tentukan *harga terendah* (minimum) dan *harga tertinggi* (maksimum).\n
-
+                            2. Proses Analisa: \n
+                            - Hitung 'Interquartile Range (IQR)':\n
+                            - Hapus outlier (data di luar batas bawah/atas atau harga tidak wajar)\n
+                            - Dari data yang telah dibersihkan, tentukan harga terendah (minimum) dan harga tertinggi (maksimum).
+                            
                             3. Output:\n
-                            - Format JSON: {"harga_terendah": nilai, "harga_tertinggi": nilai} (tanpa penjelasan tambahan).
+                            - Tidak perlu ada penjelasan, hanya tampilkan json saja\n
+                            - Format JSON: {"harga_terendah": harga_terendah, "harga_tertinggi": harga_tertinggi} (tanpa penjelasan tambahan).\n
+                            - Tidak perlu ada "'''json'''"
 
                             4. Tambahan:\n
-                            - Harga kendaraan didapatkan berdasarkan iklan yang tertera sesuai link referensi\n
-                            - Hindari mengambil harga dari sumber selain iklan seperti artikel, berita, atau bulletin, pada link referensi \n
+                            - Harga kendaraan hanya boleh didapatkan berdasarkan iklan yang tertera sesuai link referensi\n
+                            - Tidak boleh mengambil harga dari sumber selain iklan seperti artikel, berita, atau bulletin, pada link referensi \n
                             `;
 
-                            // Prompt Process (Gemini Generative AI)
-                            const promptResult = await model.generateContent(prompt);
-                            totalToken += promptResult.response.usageMetadata.totalTokenCount * 1;
-                            const resultData = JSON.parse(promptResult.response.text());
-                            console.log(`Harga Terendah: ${resultData.harga_terendah}, Harga Tertinggi: ${resultData.harga_tertinggi}`)
+                            const chatSession = model.startChat({
+                                generationConfig,
+                                history: [
+                                ],
+                            });
+
+                            // const result = await model.generateContent(prompt);
+                            const result = await chatSession.sendMessage(prompt);
+                            totalToken += result.response.usageMetadata.totalTokenCount * 1;
+                            // totalToken += 0;
 
                             let comparePrice = 0;
                             let compareDate = null;
