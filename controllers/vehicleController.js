@@ -414,7 +414,7 @@ const updateVehicleData = catchAsync(async (req, res) => {
             ai_harga_history: !isNaN(comparePrice) ? comparePrice : parseInt(comparePrice.replace(/\./g, "").trim(), 10),
             ai_harga_bawah: harga_bawah,
             ai_harga_atas: harga_atas,
-            hit_count: Sequelize.literal('hit_count') === null ? 1 : Sequelize.literal('hit_count + 1'),
+            hit_count: Sequelize.literal("CASE WHEN hit_count IS NULL THEN 1 ELSE hit_count + 1 END"),
             updated_at: dayjs.tz(Date.now(), "Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss"),
             checked_date: Date.now()
         }, { where: { id } });
