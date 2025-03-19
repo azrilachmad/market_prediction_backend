@@ -92,10 +92,8 @@ const createSinglePredict = catchAsync(async (req, res) => {
         totalToken += result.response.usageMetadata.totalTokenCount * 1;
         // totalToken += 0;
 
-        let kota =  wilayah_kendaraan
-        // kota.split(",")[0].trim();
-        // kota.replace('kota', '')
-        // kota.replace('kabupaten', '')
+        const regex = /(?:Kota|Kabupaten)?\s*([^,]+),\s*(?:Provinsi\s*)?(.+)/;
+        const match = wilayah_kendaraan.match(regex);
 
         const rawCompare = await vehicleSales.findAndCountAll({
             where: {
@@ -106,7 +104,10 @@ const createSinglePredict = catchAsync(async (req, res) => {
                     [Op.like]: `%${tahun_kendaraan}%`
                 },
                 kota: {
-                    [Op.like]: `%${kota}%`
+                    [Op.like]: `%${match ? match[1].trim() : ''}%`
+                },
+                provinsi_lokasi_unit: {
+                    [Op.like]: `%${match ? match[2].trim() : ''}%`
                 },
                 grade: {
                     [Op.not]: null,
@@ -143,13 +144,15 @@ const createSinglePredict = catchAsync(async (req, res) => {
         if (compareSet.length > 0) { compareDate = compareSet[0].tgl }
 
 
-        let jsonString = result.response.text().replace(/```json|```/g, "").trim(); 
+        let jsonString = result.response.text().replace(/```json|```/g, "").trim();
         const resultData = JSON.parse(jsonString)
         console.log(comparePrice)
         console.log(resultData)
         const responseData = {
             data: {
                 nama_kendaraan: nama_kendaraan,
+                tahun_kendaraan: tahun_kendaraan,
+                wilayah_kendaraan: wilayah_kendaraan,
                 harga_terendah: resultData.harga_terendah,
                 harga_tertinggi: resultData.harga_tertinggi,
                 harga_history_date: compareDate,
@@ -352,12 +355,24 @@ const getChart = catchAsync(async (req, res) => {
 
 const updateVehicleData = catchAsync(async (req, res) => {
     try {
-        const { id, harga_bawah, harga_atas, total_token, desciption, user, type } = req.body;
+        const { id, tahun_kendaraan, wilayah_kendaraan, harga_bawah, harga_atas, total_token, desciption, user, type } = req.body;
+
+        const regex = /(?:Kota|Kabupaten)\s([^,]+),\s(?:Provinsi\s)?(.+)/;
+        const match = wilayah_kendaraan.match(regex);
 
         const rawCompare = await vehicleSales.findAndCountAll({
             where: {
                 nama_mobil: {
                     [Op.like]: `%${desciption}%`
+                },
+                year2: {
+                    [Op.like]: `%${tahun_kendaraan}%`
+                },
+                kota: {
+                    [Op.like]: `%${match ? match[1] : ''}%`
+                },
+                provinsi_lokasi_unit: {
+                    [Op.like]: `%${match ? match[2] : ''}%`
                 },
                 grade: {
                     [Op.not]: null,
