@@ -168,9 +168,9 @@ app.use(dashboardRoute);
                                     year2: {
                                         [Op.like]: `%${data.tahun}%`
                                     },
-                                    provinsi_lokasi_unit: {
-                                        [Op.like]: `%${data.provinsi}%`
-                                    },
+                                    // provinsi_lokasi_unit: {
+                                    //     [Op.like]: `%${data.provinsi}%`
+                                    // },
                                     kota: {
                                         [Op.like]: `%${data.kota}%`
                                     },
