@@ -106,9 +106,9 @@ const createSinglePredict = catchAsync(async (req, res) => {
                 kota: {
                     [Op.like]: `%${match ? match[1].trim() : ''}%`
                 },
-                provinsi_lokasi_unit: {
-                    [Op.like]: `%${match ? match[2].trim() : ''}%`
-                },
+                // provinsi_lokasi_unit: {
+                //     [Op.like]: `%${match ? match[2].trim() : ''}%`
+                // },
                 grade: {
                     [Op.not]: null,
                 },
@@ -371,9 +371,9 @@ const updateVehicleData = catchAsync(async (req, res) => {
                 kota: {
                     [Op.like]: `%${match ? match[1] : ''}%`
                 },
-                provinsi_lokasi_unit: {
-                    [Op.like]: `%${match ? match[2] : ''}%`
-                },
+                // provinsi_lokasi_unit: {
+                //     [Op.like]: `%${match ? match[2] : ''}%`
+                // },
                 grade: {
                     [Op.not]: null,
                 },
