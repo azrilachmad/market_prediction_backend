@@ -180,7 +180,7 @@ app.use(dashboardRoute);
                                     //     [Op.like]: `%${data.provinsi}%`
                                     // },
                                     kota: {
-                                        [Op.like]: `%${data.kota.replace(/^(Kota |Kabupaten )/, '')}%`
+                                        [Op.like]: `%${data?.kota?.replace(/^(Kota |Kabupaten )/, '')}%`
                                     },
                                     grade: {
                                         [Op.not]: null,
