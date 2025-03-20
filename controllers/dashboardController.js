@@ -41,7 +41,10 @@ const getToBeProcessedData = catchAsync(async (req, res) => {
     try {
         const vehicles = await Vehicle.count({
             where: {
-                hit_count: { [Op.eq]: 0 }, // Kondisi hit_count < 2,
+                hit_count: { 
+                    [Op.eq]: 0, 
+                    [Op.eq]: null,
+                }, // Kondisi hit_count < 2,
                 created_at: {
                     [Op.between]: [new Date(startDate).setHours(0, 0, 0), new Date(endDate).setHours(23, 59, 59)] // Replace startDate and endDate with your actual values
                 }
