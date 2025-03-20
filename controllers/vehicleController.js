@@ -92,8 +92,6 @@ const createSinglePredict = catchAsync(async (req, res) => {
         totalToken += result.response.usageMetadata.totalTokenCount * 1;
         // totalToken += 0;
 
-        const regex = /(?:Kota|Kabupaten)?\s*([^,]+),\s*(?:Provinsi\s*)?(.+)/;
-        const match = wilayah_kendaraan.match(regex);
 
         const rawCompare = await vehicleSales.findAndCountAll({
             where: {
@@ -104,7 +102,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
                     [Op.like]: `%${tahun_kendaraan}%`
                 },
                 kota: {
-                    [Op.like]: `%${match ? match[1].trim() : ''}%`
+                    [Op.like]: `%${wilayah_kendaraan}%`
                 },
                 // provinsi_lokasi_unit: {
                 //     [Op.like]: `%${match ? match[2].trim() : ''}%`
