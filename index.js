@@ -132,7 +132,7 @@ app.use(dashboardRoute);
                                 {
                                     hit_count: {
                                         [Op.lt]: 2,
-                                        [Op.lt]: null
+                                        [Op.eq]: null
                                     }
                                 }, // Kondisi hit_count < 2
                                 {
