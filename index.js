@@ -131,8 +131,10 @@ app.use(dashboardRoute);
                             [Op.and]: [
                                 {
                                     hit_count: {
-                                        [Op.lt]: 2,
-                                        [Op.eq]: null
+                                        [Op.or]: [
+                                            { [Op.lt]: 2 },  // hit_count < 2
+                                            { [Op.is]: null } // hit_count IS NULL
+                                        ]
                                     }
                                 }, // Kondisi hit_count < 2
                                 {
