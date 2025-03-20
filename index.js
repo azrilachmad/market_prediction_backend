@@ -136,17 +136,17 @@ app.use(dashboardRoute);
                                             { [Op.is]: null } // hit_count IS NULL
                                         ]
                                     }
-                                }, // Kondisi hit_count < 2
+                                },
                                 {
                                     [Op.or]: [
                                         { ai_harga_atas: 0 }, // harga_atas = 0
                                         { ai_harga_bawah: 0 }, // harga_bawah = 0
-                                        { ai_harga_atas: { [Op.is]: null } }, // harga_atas = null
-                                        { ai_harga_bawah: { [Op.is]: null } }, // harga_bawah = null
+                                        { ai_harga_atas: { [Op.is]: null } }, // harga_atas IS NULL
+                                        { ai_harga_bawah: { [Op.is]: null } }, // harga_bawah IS NULL
                                     ],
                                 },
                             ],
-                        },
+                        }
                     });
 
                     let dataSet = rawData.rows.map((item) => item.dataValues);
@@ -162,6 +162,7 @@ app.use(dashboardRoute);
                     let sourceSet = dataSourceData.rows.map((item) => item.dataValues.address);
 
                     let totalToken = 0;
+
 
                     if (dataSet.length > 0) {
                         for (const data of dataSet) {
@@ -179,12 +180,13 @@ app.use(dashboardRoute);
                                     //     [Op.like]: `%${data.provinsi}%`
                                     // },
                                     kota: {
-                                        [Op.like]: `%${data.kota}%`
+                                        [Op.like]: `%${data.kota.replace(/^(Kota |Kabupaten )/, '')}%`
                                     },
                                     grade: {
                                         [Op.not]: null,
                                     },
                                 },
+                                attributes: ["tgl", "nama_mobil", "grade", "selling"],
                                 order: [
                                     [
                                         Sequelize.literal(
@@ -261,12 +263,15 @@ app.use(dashboardRoute);
                             if (compareSet.length > 0) { compareDate = compareSet[0].tgl }
 
 
+                            let jsonString = result.response.text().replace(/```json|```/g, "").trim();
+                            const resultData = JSON.parse(jsonString)
+
                             await Cars.update(
                                 {
                                     harga_history_date: compareDate,
                                     ai_harga_history: !isNaN(comparePrice) ? comparePrice : parseInt(comparePrice.replace(/\./g, "").trim(), 10),
-                                    ai_harga_atas: !isNaN(resultData.harga_tertinggi) ? resultData.harga_tertinggi * 1 : 0,
-                                    ai_harga_bawah: !isNaN(resultData.harga_terendah) ? resultData.harga_terendah * 1 : 0,
+                                    ai_harga_atas: resultData.harga_terendah,
+                                    ai_harga_bawah: resultData.harga_tertinggi,
                                     hit_count: Sequelize.literal("CASE WHEN hit_count IS NULL THEN 1 ELSE hit_count + 1 END"),
                                     updated_at: dayjs.tz(Date.now(), "Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss"),
                                     checked_date: dayjs.tz(Date.now(), "Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss")
