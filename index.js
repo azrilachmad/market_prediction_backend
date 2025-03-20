@@ -129,7 +129,12 @@ app.use(dashboardRoute);
                         order: [['created_at', 'ASC']],
                         where: {
                             [Op.and]: [
-                                { hit_count: { [Op.lt]: 2 } }, // Kondisi hit_count < 2
+                                {
+                                    hit_count: {
+                                        [Op.lt]: 2,
+                                        [Op.lt]: null
+                                    }
+                                }, // Kondisi hit_count < 2
                                 {
                                     [Op.or]: [
                                         { ai_harga_atas: 0 }, // harga_atas = 0
