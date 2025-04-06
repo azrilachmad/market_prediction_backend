@@ -98,6 +98,15 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
         .withMessage('Max Record is required')
         .run(req);
 
+    await body('ai_iqr')
+        .notEmpty()
+        .withMessage('IQR multiplier number is required')
+        .run(req);
+    await body('ai_temp')
+        .notEmpty()
+        .withMessage('AI Temperature is required')
+        .run(req);
+
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -113,15 +122,17 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
     }
 
     // Update the job schedule with validated fields
-    const { job_schedule, time, max_record } = req.body;
+    const { job_schedule, time, max_record, ai_iqr, ai_temp } = req.body;
 
 
-   
+
 
     const updateData = {};
     if (job_schedule) updateData.job_schedule = job_schedule;
     if (time) updateData.time = dayjs.tz(time, "Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss");
     if (max_record) updateData.max_record = max_record;
+    if (ai_iqr) updateData.ai_iqr = ai_iqr;
+    if (ai_temp) updateData.ai_temp = ai_temp;
     console.log(updateData.time)
 
     const [updatedRowsCount] = await jobSchedule.update(updateData, {

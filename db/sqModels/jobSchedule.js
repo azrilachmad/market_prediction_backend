@@ -54,6 +54,30 @@ const jobSchedule = sequelize.define('jobSchedule', {
       },
     }
   },
+  ai_iqr: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+    validate: {
+      notNull: {
+        msg: 'IQR multipliier number cannot be null'
+      },
+      notEmpty: {
+        msg: 'IQR multipliier number cannot be empty'
+      },
+    }
+  },
+  ai_temp: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+    validate: {
+      notNull: {
+        msg: 'AI temperature number cannot be null'
+      },
+      notEmpty: {
+        msg: 'IQR temperature number cannot be empty'
+      },
+    }
+  },
   createdAt: {
     allowNull: false,
     type: DataTypes.DATE
