@@ -12,6 +12,7 @@ const dataSource = require('../db/sqModels/dataSource.js');
 const scheduleLog = require('../db/sqModels/scheduleLog.js');
 const vehicleSales = require('../model/vehicleSales.js');
 const dayjs = require('dayjs');
+const jobSchedule = require('../db/sqModels/jobSchedule.js');
 
 const fs = ('fs');
 const { ChartJSNodeCanvas } = ("chartjs-node-canvas");
@@ -29,13 +30,19 @@ const model = genAI.getGenerativeModel({
     },],
 });
 
-const generationConfig = {
-    temperature: 1,
-    topP: 0.95,
-    topK: 40,
-    maxOutputTokens: 8192,
-    responseMimeType: "text/plain",
-};
+async function getDynamicGenerationConfig() {
+    const jobScheduleData = await jobSchedule.findAll();
+    const parseDataConfig = jobScheduleData.map((item) => item.toJSON());
+    const temperature_value = parseDataConfig[0]?.ai_temp;
+    console.log("Temperature Value: " + temperature_value)
+    return {
+        temperature: temperature_value || 1,
+        topP: 0.95,
+        topK: 40,
+        maxOutputTokens: 8192,
+        responseMimeType: "text/plain",
+    };
+}
 
 
 const createSinglePredict = catchAsync(async (req, res) => {
@@ -56,9 +63,14 @@ const createSinglePredict = catchAsync(async (req, res) => {
         const dataSourceData = await dataSource.findAndCountAll({ where: { status: true } });
         let sourceSet = dataSourceData.rows.map((item) => item.dataValues.address);
         const referenceLinks = sourceSet.map((link) => `- ${link}`).join(", ");
+        const jobScheduleData = await jobSchedule.findAll();
+        const parseData = jobScheduleData.map((item) => item.toJSON());
+        const ai_iqr = parseData[0]?.ai_iqr;
 
 
         let totalToken = 0;
+        console.log("IQR Value: " + ai_iqr)
+
 
         const prompt = `Tentukan harga terendah dan tertinggi sebuah Kendaraan untuk ${jenis_kendaraan} ${nama_kendaraan}, Tahun ${tahun_kendaraan}, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar} di wilayah ${wilayah_kendaraan} dengan ketentuan sebagai berikut:\n
         1. Data yang digunakan\n
@@ -68,6 +80,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
 
         2. Proses Analisa: \n
         - Hitung 'Interquartile Range (IQR)':\n
+        - Pengali IQR yang digunakan adalah ${ai_iqr ? ai_iqr : 1.5}.\n
         - Hapus outlier (data di luar batas bawah/atas atau harga tidak wajar)\n
         - Dari data yang telah dibersihkan, tentukan harga terendah (minimum) dan harga tertinggi (maksimum).
         
@@ -81,10 +94,11 @@ const createSinglePredict = catchAsync(async (req, res) => {
         - Tidak boleh mengambil harga dari sumber selain iklan seperti artikel, berita, atau bulletin, pada link referensi \n
         `;
 
+        const generationConfig = await getDynamicGenerationConfig();
+
         const chatSession = model.startChat({
             generationConfig,
-            history: [
-            ],
+            history: [],
         });
 
         // const result = await model.generateContent(prompt);
