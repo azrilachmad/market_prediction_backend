@@ -35,15 +35,19 @@ const model = genAI.getGenerativeModel({
         },
     },],
 });
-
-const generationConfig = {
-    temperature: 1,
-    topP: 0.95,
-    topK: 40,
-    maxOutputTokens: 8192,
-    responseMimeType: "text/plain",
-};
-
+async function getDynamicGenerationConfig() {
+    const jobScheduleData = await jobSchedule.findAll();
+    const parseDataConfig = jobScheduleData.map((item) => item.toJSON());
+    const temperature_value = parseDataConfig[0]?.ai_temp;
+    // console.log("Temperature Value: " + temperature_value)
+    return {
+        temperature: temperature_value || 1,
+        topP: 0.95,
+        topK: 40,
+        maxOutputTokens: 8192,
+        responseMimeType: "text/plain",
+    };
+}
 
 // Define every route
 const vehicleRoute = require('./routes/vehicleRoute.js')
@@ -95,7 +99,6 @@ app.use(dashboardRoute);
             const hh = date.hour();
             const mm = date.minute();
             const ss = date.second();
-
             console.log(hh, mm, ss);
             return {
                 hour: hh,
@@ -112,6 +115,8 @@ app.use(dashboardRoute);
                 currentCronJob.stop();
                 console.log('Previous cron job stopped.');
             }
+
+            // console.log(parseData[0]?.ai_iqr)
 
             // Create a new cron job
             // const cronTime = `* * * * * *`; // Dynamic schedule
@@ -231,6 +236,7 @@ app.use(dashboardRoute);
 
                             2. Proses Analisa: \n
                             - Hitung 'Interquartile Range (IQR)':\n
+                            - Pengali IQR yang digunakan adalah ${parseData[0]?.ai_iqr ? parseData[0]?.ai_iqr : 1.5}.\n
                             - Hapus outlier (data di luar batas bawah/atas atau harga tidak wajar)\n
                             - Dari data yang telah dibersihkan, tentukan harga terendah (minimum) dan harga tertinggi (maksimum).
                             
@@ -244,10 +250,11 @@ app.use(dashboardRoute);
                             - Tidak boleh mengambil harga dari sumber selain iklan seperti artikel, berita, atau bulletin, pada link referensi \n
                             `;
 
+                            const generationConfig = await getDynamicGenerationConfig();
+
                             const chatSession = model.startChat({
                                 generationConfig,
-                                history: [
-                                ],
+                                history: [],
                             });
 
                             // const result = await model.generateContent(prompt);
