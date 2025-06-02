@@ -275,6 +275,7 @@ const getVehicleList = catchAsync(async (req, res) => {
                 }
                 : search ? {
                     [Op.or]: [
+                        { agreement_no: { [Op.like]: `%${search}%` } },
                         { ai_nama_mobil: { [Op.like]: `%${search}%` } },
                         { vehicle_transmission: { [Op.like]: `%${search}%` } },
                         { tahun: { [Op.like]: `%${search}%` } },

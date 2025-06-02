@@ -32,15 +32,7 @@ const jobSchedule = sequelize.define('jobSchedule', {
   },
   time: {
     type: DataTypes.DATE,
-    allowNull: false,
-    validate: {
-      notNull: {
-        msg: 'Time cannot be null'
-      },
-      notEmpty: {
-        msg: 'Time cannot be empty'
-      }
-    }
+    allowNull: true,
   },
   max_record: {
     type: DataTypes.INTEGER,
@@ -77,6 +69,10 @@ const jobSchedule = sequelize.define('jobSchedule', {
         msg: 'IQR temperature number cannot be empty'
       },
     }
+  },
+  interval: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
   },
   createdAt: {
     allowNull: false,

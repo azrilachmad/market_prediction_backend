@@ -95,32 +95,36 @@ app.use(dashboardRoute);
         async function fetchJobSchedule() {
             const jobScheduleData = await jobSchedule.findAll();
             parseData = jobScheduleData.map((item) => item.toJSON());
+            const interval = parseData[0]?.interval // Default to daily at midnight if not set
+            const job_schedule = parseData[0]?.job_schedule // Default to daily at midnight if not set
             const date = dayjs(parseData[0]?.time).tz('Asia/Bangkok'); // Use a valid timezone name
             const hh = date.hour();
             const mm = date.minute();
             const ss = date.second();
-            console.log(hh, mm, ss);
             return {
                 hour: hh,
                 minute: mm,
                 second: ss,
+                interval: interval,
+                job_schedule,
                 parseData,
             };
         }
 
         // Schedule the price check job
-        function schedulePriceCheck({ hour, minute, second, parseData }) {
+        async function schedulePriceCheck({ hour, minute, second, parseData, interval, job_schedule }) {
             // Stop the existing job if it exists
             if (currentCronJob) {
                 currentCronJob.stop();
                 console.log('Previous cron job stopped.');
             }
 
-            // console.log(parseData[0]?.ai_iqr)
-
             // Create a new cron job
-            // const cronTime = `* * * * * *`; // Dynamic schedule
-            const cronTime = `${minute} ${hour} * * *`; // Dynamic schedule
+            const jobScheduleData = await jobSchedule.findAll();
+            parsedData = jobScheduleData.map((item) => item.toJSON());
+
+            // const cronTime = `*/${interval} * * * * *`; // Dynamic schedule
+            const cronTime = parseData[0]?.job_schedule === 'interval' ?  `*/${parseData[0]?.interval} * * * * *` : `${minute} ${hour} * * *`; // Dynamic schedule
             currentCronJob = cron.schedule(cronTime, async () => {
                 console.log('Price check cron job running...');
 
@@ -328,13 +332,15 @@ app.use(dashboardRoute);
             const hasScheduleChanged =
                 updatedScheduleData.hour !== scheduleData.hour ||
                 updatedScheduleData.minute !== scheduleData.minute ||
-                updatedScheduleData.second !== scheduleData.second;
+                updatedScheduleData.second !== scheduleData.second ||
+                updatedScheduleData.interval !== scheduleData.interval ||
+                updatedScheduleData.job_schedule !== scheduleData.job_schedule;
 
             if (hasScheduleChanged) {
                 console.log('Schedule updated in database, rescheduling the cron job...');
                 schedulePriceCheck(updatedScheduleData);
             }
-        }, 20000); // Check every 60 seconds
+        }, 5000); // Check every 60 seconds
 
     } catch (error) {
         console.error("Error occurred:", error);

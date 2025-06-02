@@ -106,6 +106,8 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
         .notEmpty()
         .withMessage('AI Temperature is required')
         .run(req);
+    await body('interval')
+        .run(req);
 
     // Check for validation errors
     const errors = validationResult(req);
@@ -122,7 +124,7 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
     }
 
     // Update the job schedule with validated fields
-    const { job_schedule, time, max_record, ai_iqr, ai_temp } = req.body;
+    const { job_schedule, time, max_record, ai_iqr, ai_temp, interval } = req.body;
 
 
 
@@ -133,6 +135,7 @@ const editJobSchedule = catchAsync(async (req, res, next) => {
     if (max_record) updateData.max_record = max_record;
     if (ai_iqr) updateData.ai_iqr = ai_iqr;
     if (ai_temp) updateData.ai_temp = ai_temp;
+    if (interval) updateData.interval = interval;
     console.log(updateData.time)
 
     const [updatedRowsCount] = await jobSchedule.update(updateData, {
