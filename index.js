@@ -61,13 +61,26 @@ const vehicleSales = require('./model/vehicleSales.js');
 
 
 
-const corsOptions = {
-    origin: ['https://pricecheck.sipector.com', 'https://market-prediction.synchro.co.id', 'http://147.139.171.166:3000', 'http://localhost:3000'], // Frontend URL
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Include OPTIONS
-    allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
-    credentials: true, // Allow cookies/auth headers
-};
-app.use(cors(corsOptions));
+const allowedOrigins = [
+  "https://pricecheck.sipector.com",
+  "https://market-prediction.synchro.co.id",
+  "http://147.139.171.166:3000",
+  "http://localhost:3000"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
+
+// Make sure OPTIONS is handled
+app.options("*", cors());
 
 app.use(express.json());
 
