@@ -24,25 +24,62 @@ const timezone = require('dayjs/plugin/timezone');
 
 
 
+// CORS config
+const allowedOrigins = [
+    "https://pricecheck.sipector.com",
+    "https://market-prediction.synchro.co.id",
+    "http://147.139.171.166:3000",
+    "http://localhost:3000"
+];
+
 const corsOptions = {
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      "https://pricecheck.sipector.com",
-      "https://market-prediction.synchro.co.id",
-      "http://147.139.171.166:3000",
-      "http://localhost:3000"
-    ];
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 };
 
+
+// 🔥 MUST come first, before routes
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+app.use(express.json());
+
+db.authenticate()
+    .then(() => console.log('Database Connected...'))
+    .catch(err => console.error("Error connecting to the database: ", err))
+
+
+    // Define every route
+const vehicleRoute = require('./routes/vehicleRoute.js')
+const authRoute = require('./routes/authRoute.js')
+const userRoute = require('./routes/userRoute.js')
+const dataParameterRoute = require('./routes/dataParameterRoute.js')
+const dataSourceRoute = require('./routes/dataSourceRoute.js')
+const jobScheduleRoute = require('./routes/jobScheduleRoute.js');
+const dashboardRoute = require('./routes/dashboardRoute.js');
+const vehicleSales = require('./model/vehicleSales.js');
+
+
+
+
+
+
+
+
+app.use(vehicleRoute);
+app.use(authRoute);
+app.use(userRoute);
+app.use(dataParameterRoute);
+app.use(dataSourceRoute);
+app.use(jobScheduleRoute);
+app.use(dashboardRoute);
 
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -71,37 +108,6 @@ async function getDynamicGenerationConfig() {
     };
 }
 
-// Define every route
-const vehicleRoute = require('./routes/vehicleRoute.js')
-const authRoute = require('./routes/authRoute.js')
-const userRoute = require('./routes/userRoute.js')
-const dataParameterRoute = require('./routes/dataParameterRoute.js')
-const dataSourceRoute = require('./routes/dataSourceRoute.js')
-const jobScheduleRoute = require('./routes/jobScheduleRoute.js');
-const dashboardRoute = require('./routes/dashboardRoute.js');
-const vehicleSales = require('./model/vehicleSales.js');
-
-
-
-
-
-
-// 🔥 MUST come first, before routes
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-app.use(express.json());
-
-db.authenticate()
-    .then(() => console.log('Database Connected...'))
-    .catch(err => console.error("Error connecting to the database: ", err))
-
-app.use(vehicleRoute);
-app.use(authRoute);
-app.use(userRoute);
-app.use(dataParameterRoute);
-app.use(dataSourceRoute);
-app.use(jobScheduleRoute);
-app.use(dashboardRoute);
 
 
 
@@ -144,7 +150,7 @@ app.use(dashboardRoute);
             parsedData = jobScheduleData.map((item) => item.toJSON());
 
             // const cronTime = `*/${interval} * * * * *`; // Dynamic schedule
-            const cronTime = parseData[0]?.job_schedule === 'interval' ?  `*/${parseData[0]?.interval} * * * * *` : `${minute} ${hour} * * *`; // Dynamic schedule
+            const cronTime = parseData[0]?.job_schedule === 'interval' ? `*/${parseData[0]?.interval} * * * * *` : `${minute} ${hour} * * *`; // Dynamic schedule
             currentCronJob = cron.schedule(cronTime, async () => {
                 console.log('Price check cron job running...');
 
