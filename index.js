@@ -23,6 +23,27 @@ const utc = require('dayjs/plugin/utc');
 const timezone = require('dayjs/plugin/timezone');
 
 
+const allowedOrigins = [
+  "https://pricecheck.sipector.com",
+  "https://market-prediction.synchro.co.id",
+  "http://147.139.171.166:3000",
+  "http://localhost:3000"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
+
+// Make sure OPTIONS is handled
+app.options("*", cors());
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
     model: "gemini-1.5-pro",
@@ -61,26 +82,9 @@ const vehicleSales = require('./model/vehicleSales.js');
 
 
 
-const allowedOrigins = [
-  "https://pricecheck.sipector.com",
-  "https://market-prediction.synchro.co.id",
-  "http://147.139.171.166:3000",
-  "http://localhost:3000"
-];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
 
-// Make sure OPTIONS is handled
-app.options("*", cors());
+
 
 app.use(express.json());
 
