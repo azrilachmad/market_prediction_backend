@@ -23,15 +23,15 @@ const utc = require('dayjs/plugin/utc');
 const timezone = require('dayjs/plugin/timezone');
 
 
-const allowedOrigins = [
-  "https://pricecheck.sipector.com",
-  "https://market-prediction.synchro.co.id",
-  "http://147.139.171.166:3000",
-  "http://localhost:3000"
-];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
+    const allowedOrigins = [
+      "https://pricecheck.sipector.com",
+      "https://market-prediction.synchro.co.id",
+      "http://147.139.171.166:3000",
+      "http://localhost:3000"
+    ];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -39,10 +39,11 @@ app.use(cors({
     }
   },
   credentials: true,
-}));
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
 
-// Make sure OPTIONS is handled
-app.options("*", cors());
+
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
@@ -85,7 +86,9 @@ const vehicleSales = require('./model/vehicleSales.js');
 
 
 
-
+// 🔥 MUST come first, before routes
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 
 db.authenticate()
