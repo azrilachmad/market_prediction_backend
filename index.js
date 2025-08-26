@@ -281,8 +281,8 @@ app.use(dashboardRoute);
                                 {
                                     harga_history_date: compareDate,
                                     ai_harga_history: !isNaN(comparePrice) ? comparePrice : parseInt(comparePrice.replace(/\./g, "").trim(), 10),
-                                    ai_harga_atas: resultData.harga_terendah,
-                                    ai_harga_bawah: resultData.harga_tertinggi,
+                                    ai_harga_atas: resultData.harga_tertinggi,
+                                    ai_harga_bawah: resultData.harga_terendah,
                                     hit_count: Sequelize.literal("CASE WHEN hit_count IS NULL THEN 1 ELSE hit_count + 1 END"),
                                     updated_at: dayjs.tz(Date.now(), "Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss"),
                                     checked_date: dayjs.tz(Date.now(), "Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss")
