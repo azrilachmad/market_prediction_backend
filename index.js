@@ -84,15 +84,7 @@ app.use(dashboardRoute);
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-pro",
-    tools: [{
-        google_search_retrieval: {
-            dynamic_retrieval_config: {
-                mode: "MODE_DYNAMIC",
-                dynamic_threshold: 0.42,
-            },
-        },
-    },],
+    model: "gemini-2.5-pro"
 });
 async function getDynamicGenerationConfig() {
     const jobScheduleData = await jobSchedule.findAll();
