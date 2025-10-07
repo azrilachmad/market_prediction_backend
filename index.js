@@ -29,7 +29,8 @@ const allowedOrigins = [
     "https://pricecheck.sipector.com",
     "https://market-prediction.synchro.co.id",
     "http://147.139.171.166:3000",
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "market-prediction.synchro.co.id"
 ];
 
 const corsOptions = {
