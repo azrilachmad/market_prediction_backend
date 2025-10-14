@@ -19,7 +19,7 @@ const { ChartJSNodeCanvas } = ("chartjs-node-canvas");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-pro",
+    model: "gemini-2.5-flash",
 });
 
 async function getDynamicGenerationConfig() {
@@ -31,8 +31,11 @@ async function getDynamicGenerationConfig() {
         temperature: temperature_value || 1,
         topP: 0.95,
         topK: 40,
-        maxOutputTokens: 8192,
+        maxOutputTokens: 6000,
         responseMimeType: "text/plain",
+        thinkingConfig: {
+            thinkingBudget: 0,
+        },
     };
 }
 
@@ -64,7 +67,7 @@ const createSinglePredict = catchAsync(async (req, res) => {
         console.log("IQR Value: " + ai_iqr)
 
 
-        const prompt = `Tentukan harga terendah dan tertinggi sebuah Kendaraan untuk ${jenis_kendaraan} ${nama_kendaraan}, Tahun ${tahun_kendaraan}, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar} di wilayah ${wilayah_kendaraan} dengan ketentuan sebagai berikut:\n
+        const prompt = `Tentukan harga terendah dan tertinggi sebuah Kendaraan untuk ${jenis_kendaraan} ${nama_kendaraan}, Tahun ${tahun_kendaraan}, transmisi kendaraan ${transmisi_kendaraan}, bahan bakar ${bahan_bakar} di wilayah ${wilayah_kendaraan} dengan ATURAN KETAT sebagai berikut:\n
         1. Data yang digunakan\n
         - Sumber utama: Data terbaru dari ${sourceSet.length > 0 ? referenceLinks : '-'} (periksa listing hari ini).\n
         - Parameter pencarian: Model "${nama_kendaraan}", Tahun "${tahun_kendaraan}", Bahan Bakar "${bahan_bakar}", Wilayah "${wilayah_kendaraan}" \n
